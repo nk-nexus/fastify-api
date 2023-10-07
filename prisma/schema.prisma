@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        Int         @id @default(autoincrement())
+  name      String?     @db.VarChar(50)
+  email     String      @unique @db.VarChar(255)
+  password  String      @db.Text()
+  phone     String?     @db.VarChar(20)
+  address   String?     @db.Text()
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  Order     Order[]
+  OrderItem OrderItem[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  details    String?     @db.Text()
+  status     OrderStatus @default(INTERESTED)
+  total      Int
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  deletedAt  DateTime
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  customerId Int
+  OrderItem  OrderItem[]
+}
+
+model OrderItem {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  customer     Customer   @relation(fields: [customerId], references: [id])
+  customerId   Int
+  order        Order      @relation(fields: [orderId], references: [id])
+  orderId      Int
+  product      Product    @relation(fields: [productId], references: [id])
+  productId    Int
+  stockItem    StockItem? @relation(fields: [stockItemsId], references: [id])
+  stockItemsId Int?       @unique
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(119)
+  brand       String      @db.VarChar(119)
+  vendor      String      @db.VarChar(119)
+  type        ProductType
+  price       Int
+  details     Json
+  purchasable Boolean
+  OrderItem   OrderItem[]
+  StockItem   StockItem[]
+
+  @@fulltext([brand, vendor])
+}
+
+model StockItem {
+  id        Int        @id @default(autoincrement())
+  code      String     @db.VarChar(50)
+  details   String?    @db.Text()
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime
+  product   Product    @relation(fields: [productId], references: [id])
+  productId Int
+  OrderItem OrderItem?
+}
+
+enum ProductType {
+  CPU
+  GPU
+  RAM
+  M2
+  SSD
+  HDD
+  MOTHERBOARD
+  POWER_SUPPLY
+  UPS
+  MONITOR
+  CASE
+}
+
+enum OrderStatus {
+  INTERESTED
+  ORDERED
+  PURCHASED
+  COMPLETED
+}
+
+// model Post {
+//   id        Int      @id @default(autoincrement())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+//   title     String   @db.VarChar(255)
+//   content   String?
+//   published Boolean  @default(false)
+//   author    User     @relation(fields: [authorId], references: [id])
+//   authorId  Int
+// }
+
+// model Profile {
+//   id     Int     @id @default(autoincrement())
+//   bio    String?
+//   user   User    @relation(fields: [userId], references: [id])
+//   userId Int     @unique
+// }
+
+// model User {
+//   id      Int      @id @default(autoincrement())
+//   email   String   @unique
+//   name    String?
+//   posts   Post[]
+//   profile Profile?
+// }

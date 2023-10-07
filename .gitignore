@@ -4,3 +4,6 @@
 
 localhost-cert.pem
 localhost-privkey.pem
+
+# env
+.env
