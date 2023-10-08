@@ -1,5 +1,5 @@
 # fastify-api
-fastify with http2 + typescript + prisma + mysql + rxjs
+fastify with http2 + typescript + prisma + mysql
 
 #### Generate Key
 `openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -keyout localhost-privkey.pem -out localhost-cert.pem`
