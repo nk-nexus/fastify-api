@@ -4,8 +4,6 @@ import fs from "fs";
 import pino from "pino";
 import { customerSchemas } from "./modules/customer/customer.schema";
 import customerRoutes from "./modules/customer/customer.route";
-// import { withRefResolver } from "fastify-zod";
-// import { version } from "../package.json";
 
 declare module "fastify" {
   interface FastifyRequest {
