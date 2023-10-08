@@ -25,6 +25,8 @@ declare module "@fastify/jwt" {
 }
 
 function buildServer() {
+  const jwtSecret = process.env.JWT_SECRET || "";
+
   const server = Fastify({
     // http2 config
     http2: true,
@@ -40,7 +42,7 @@ function buildServer() {
   });
 
   server.register(fjwt, {
-    secret: "ndkandnan78duy9sau87dbndsa89u7dsy789adb",
+    secret: jwtSecret,
   });
 
   server.decorate(
