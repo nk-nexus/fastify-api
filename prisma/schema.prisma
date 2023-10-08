@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextIndex"]
+  previewFeatures = ["fullTextIndex", "fullTextSearch"]
 }
 
 datasource db {
@@ -59,12 +59,13 @@ model Product {
   vendor      String      @db.VarChar(119)
   type        ProductType
   price       Int
+  tags        String      @db.Text()
   details     Json
   purchasable Boolean
   OrderItem   OrderItem[]
   StockItem   StockItem[]
 
-  @@fulltext([brand, vendor])
+  @@fulltext([brand, vendor, tags])
 }
 
 model StockItem {

@@ -51,10 +51,11 @@ CREATE TABLE `Product` (
     `vendor` VARCHAR(119) NOT NULL,
     `type` ENUM('CPU', 'GPU', 'RAM', 'M2', 'SSD', 'HDD', 'MOTHERBOARD', 'POWER_SUPPLY', 'UPS', 'MONITOR', 'CASE') NOT NULL,
     `price` INTEGER NOT NULL,
+    `tags` TEXT NOT NULL,
     `details` JSON NOT NULL,
     `purchasable` BOOLEAN NOT NULL,
 
-    FULLTEXT INDEX `Product_brand_vendor_idx`(`brand`, `vendor`),
+    FULLTEXT INDEX `Product_brand_vendor_tags_idx`(`brand`, `vendor`, `tags`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
