@@ -14,6 +14,9 @@ const customerCore = {
   name: z.string(),
 };
 
+/**
+ * request body for Register
+ */
 const createCustomerSchema = z.object({
   ...customerCore,
   password: z.string({
@@ -22,6 +25,9 @@ const createCustomerSchema = z.object({
   }),
 });
 
+/**
+ * response data for Register
+ */
 const createCustomerResponseSchema = z.object({
   id: z.number(),
   ...customerCore,
@@ -46,7 +52,7 @@ const loginSchema = z.object({
 });
 
 /**
- * response data for Login
+ * response data for Login 
  */
 const loginResponseSchema = z.object({
   accessToken: z.string(),
@@ -57,7 +63,7 @@ export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 /** Request body type for Login  */
 export type LoginInput = z.infer<typeof loginSchema>;
 
-/** Build Schemas */
+/** Build Customer Schemas */
 export const { schemas: customerSchemas, $ref } = buildJsonSchemas({
   createCustomerSchema,
   createCustomerResponseSchema,

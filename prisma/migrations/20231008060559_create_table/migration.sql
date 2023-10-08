@@ -55,7 +55,7 @@ CREATE TABLE `Product` (
     `details` JSON NOT NULL,
     `purchasable` BOOLEAN NOT NULL,
 
-    FULLTEXT INDEX `Product_brand_vendor_tags_idx`(`brand`, `vendor`, `tags`),
+    FULLTEXT INDEX `Product_tags_idx`(`tags`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -66,7 +66,7 @@ CREATE TABLE `StockItem` (
     `details` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `deletedAt` DATETIME(3) NOT NULL,
+    `deletedAt` DATETIME(3) NULL,
     `productId` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
