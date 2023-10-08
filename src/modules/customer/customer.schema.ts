@@ -52,7 +52,7 @@ const loginSchema = z.object({
 });
 
 /**
- * response data for Login 
+ * response data for Login
  */
 const loginResponseSchema = z.object({
   accessToken: z.string(),
@@ -64,9 +64,12 @@ export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 
 /** Build Customer Schemas */
-export const { schemas: customerSchemas, $ref } = buildJsonSchemas({
-  createCustomerSchema,
-  createCustomerResponseSchema,
-  loginResponseSchema,
-  loginSchema,
-});
+export const { schemas: customerSchemas, $ref } = buildJsonSchemas(
+  {
+    createCustomerSchema,
+    createCustomerResponseSchema,
+    loginResponseSchema,
+    loginSchema,
+  },
+  { $id: "customer" }
+);

@@ -54,6 +54,8 @@ CREATE TABLE `Product` (
     `tags` TEXT NOT NULL,
     `details` JSON NOT NULL,
     `purchasable` BOOLEAN NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
     FULLTEXT INDEX `Product_tags_idx`(`tags`),
     PRIMARY KEY (`id`)

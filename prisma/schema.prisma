@@ -21,8 +21,8 @@ model Customer {
   address   String?     @db.Text()
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  Order     Order[]
-  OrderItem OrderItem[]
+  order     Order[]
+  orderItem OrderItem[]
 }
 
 model Order {
@@ -35,7 +35,7 @@ model Order {
   deletedAt  DateTime
   customer   Customer    @relation(fields: [customerId], references: [id])
   customerId Int
-  OrderItem  OrderItem[]
+  orderItem  OrderItem[]
 }
 
 model OrderItem {
@@ -62,8 +62,10 @@ model Product {
   tags        String      @db.Text()
   details     Json
   purchasable Boolean
-  OrderItem   OrderItem[]
-  StockItem   StockItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  stockItem   StockItem[]
+  orderItem   OrderItem[]
 
   @@fulltext([tags])
 }
@@ -77,7 +79,7 @@ model StockItem {
   deletedAt DateTime?
   product   Product    @relation(fields: [productId], references: [id])
   productId Int
-  OrderItem OrderItem?
+  orderItem OrderItem?
 }
 
 enum ProductType {

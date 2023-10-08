@@ -4,6 +4,8 @@ import fs from "fs";
 import pino from "pino";
 import { customerSchemas } from "./modules/customer/customer.schema";
 import customerRoutes from "./modules/customer/customer.route";
+import productRoutes from "./modules/product/product.route";
+import { productSchemas } from "./modules/product/product.schema";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -41,10 +43,12 @@ function buildServer() {
     }),
   });
 
+  // register fastify jwt with secret
   server.register(fjwt, {
     secret: jwtSecret,
   });
 
+  // adding custom decorators to protect some routes
   server.decorate(
     "authenticate",
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -56,17 +60,19 @@ function buildServer() {
     }
   );
 
+  // add check health server status
   server.get("/healthz", function () {
     return { status: "OK" };
   });
 
+  // inject jwt data into request
   server.addHook("preHandler", (req, reply, next) => {
     req.jwt = server.jwt;
     return next();
   });
 
-  //   add schema into server
-  for (const schema of [...customerSchemas]) {
+  // add schema into server
+  for (const schema of [...customerSchemas, ...productSchemas]) {
     server.addSchema(schema);
   }
 
@@ -87,7 +93,7 @@ function buildServer() {
   //   );
 
   server.register(customerRoutes, { prefix: "api/customers" });
-  //   server.register(productRoutes, { prefix: "api/products" });
+  server.register(productRoutes, { prefix: "api/products" });
 
   return server;
 }

@@ -1,10 +1,11 @@
 import prisma from "../utils/prisma";
-import { GetProductFilter } from "./product.schema";
+import { CreateProductInput, GetProductFilter } from "./product.schema";
 
 export async function getProductPagination(query: GetProductFilter) {
   const { limit, page, text, type, tags } = query;
-
+  
   let whereConditions: any = {};
+  
   // filter by contains text in name column
   if (text) {
     whereConditions.name = {
@@ -32,12 +33,16 @@ export async function getProductPagination(query: GetProductFilter) {
     skip: (page - 1) * limit,
   });
 
-  return Promise.all([
+  return Promise.all(
     products.map(async ({ id, ...rest }) => {
       const inStock = await prisma.stockItem.count({
         where: { productId: id, deletedAt: null },
       });
       return { id, ...rest, inStock };
-    }),
-  ]);
+    })
+  );
+}
+
+export async function createProduct(data: CreateProductInput) {
+  return prisma.product.create({ data });
 }
