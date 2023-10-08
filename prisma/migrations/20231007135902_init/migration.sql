@@ -3,13 +3,15 @@ CREATE TABLE `Customer` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NULL,
     `email` VARCHAR(255) NOT NULL,
-    `password` TEXT NOT NULL,
+    `password` VARCHAR(512) NOT NULL,
+    `salt` VARCHAR(119) NOT NULL,
     `phone` VARCHAR(20) NULL,
     `address` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `Customer_email_key`(`email`),
+    UNIQUE INDEX `Customer_password_key`(`password`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

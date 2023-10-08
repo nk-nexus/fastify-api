@@ -15,7 +15,8 @@ model Customer {
   id        Int         @id @default(autoincrement())
   name      String?     @db.VarChar(50)
   email     String      @unique @db.VarChar(255)
-  password  String      @db.Text()
+  password  String      @unique @db.VarChar(512)
+  salt      String      @db.VarChar(119)
   phone     String?     @db.VarChar(20)
   address   String?     @db.Text()
   createdAt DateTime    @default(now())
@@ -98,29 +99,3 @@ enum OrderStatus {
   PURCHASED
   COMPLETED
 }
-
-// model Post {
-//   id        Int      @id @default(autoincrement())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//   title     String   @db.VarChar(255)
-//   content   String?
-//   published Boolean  @default(false)
-//   author    User     @relation(fields: [authorId], references: [id])
-//   authorId  Int
-// }
-
-// model Profile {
-//   id     Int     @id @default(autoincrement())
-//   bio    String?
-//   user   User    @relation(fields: [userId], references: [id])
-//   userId Int     @unique
-// }
-
-// model User {
-//   id      Int      @id @default(autoincrement())
-//   email   String   @unique
-//   name    String?
-//   posts   Post[]
-//   profile Profile?
-// }
