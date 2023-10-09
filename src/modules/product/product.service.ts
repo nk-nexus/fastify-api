@@ -1,11 +1,22 @@
 import prisma from "../utils/prisma";
-import { CreateProductInput, GetProductFilter } from "./product.schema";
+import {
+  CreateProductInput,
+  GetProductInput,
+  ProductIdInput,
+  UpdateProductDetailsInput,
+  UpdateProductPurchasableInput,
+} from "./product.schema";
 
-export async function getProductPagination(query: GetProductFilter) {
+/**
+ * Get Procudt Pagination
+ * @param query includes type, text, and tags
+ * @returns product array with total stock
+ */
+export async function getProductPagination(query: GetProductInput) {
   const { limit, page, text, type, tags } = query;
-  
+
   let whereConditions: any = {};
-  
+
   // filter by contains text in name column
   if (text) {
     whereConditions.name = {
@@ -43,6 +54,41 @@ export async function getProductPagination(query: GetProductFilter) {
   );
 }
 
+/**
+ * Create Product
+ * @param data the object that matchs for creating a product
+ * @returns a created product
+ */
 export async function createProduct(data: CreateProductInput) {
   return prisma.product.create({ data });
+}
+
+/**
+ * Update Product Details
+ * @param data contains update value for the product
+ * @returns a updated product
+ */
+export async function updateProductDetails(
+  data: UpdateProductDetailsInput & ProductIdInput
+) {
+  const { productId: id, ...updateData } = data;
+  return prisma.product.update({
+    where: { id: parseInt(id) },
+    data: updateData,
+  });
+}
+
+/**
+ * Updaate Product Purchasable
+ * @param data contains productId and purchasable status
+ * @returns a updated product
+ */
+export async function updateProductPurchasable(
+  data: UpdateProductPurchasableInput & ProductIdInput
+) {
+  const { status, productId: id } = data;
+  return prisma.product.update({
+    where: { id: parseInt(id) },
+    data: { purchasable: status == "y" },
+  });
 }
