@@ -6,6 +6,8 @@ import { customerSchemas } from "./modules/customer/customer.schema";
 import customerRoutes from "./modules/customer/customer.route";
 import productRoutes from "./modules/product/product.route";
 import { productSchemas } from "./modules/product/product.schema";
+import orderRoutes from "./modules/order/order.route";
+import { orderSchemas } from "./modules/order/order.schema";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -72,9 +74,18 @@ function buildServer() {
   });
 
   // add schema into server
-  for (const schema of [...customerSchemas, ...productSchemas]) {
+  for (const schema of [
+    ...customerSchemas,
+    ...productSchemas,
+    ...orderSchemas,
+  ]) {
     server.addSchema(schema);
   }
+
+  // add routes into server
+  server.register(customerRoutes, { prefix: "api/customers" });
+  server.register(productRoutes, { prefix: "api/products" });
+  server.register(orderRoutes, { prefix: "api/orders" });
 
   //   server.register(
   //     swagger,
@@ -91,9 +102,6 @@ function buildServer() {
   //       },
   //     })
   //   );
-
-  server.register(customerRoutes, { prefix: "api/customers" });
-  server.register(productRoutes, { prefix: "api/products" });
 
   return server;
 }

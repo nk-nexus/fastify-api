@@ -28,7 +28,7 @@ const createCustomerSchema = z.object({
 /**
  * response data for Register
  */
-const createCustomerResponseSchema = z.object({
+export const createCustomerResponseSchema = z.object({
   id: z.number(),
   ...customerCore,
 });

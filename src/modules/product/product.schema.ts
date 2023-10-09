@@ -82,7 +82,7 @@ const createProductRequestSchema = z.object(customProductInput);
 // Update Product Details Request Schema
 const updateProductDetailsRequestSchema = z.object(customProductDetails);
 
-// Update Product Purchasable Requeset Schema
+// Update Product Purchasable Request Schema
 const updateProductPurchasableRequestSchema = z.object({
   status: z.enum(["y", "n"]),
 });
