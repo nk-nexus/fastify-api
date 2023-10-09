@@ -8,6 +8,8 @@ import productRoutes from "./modules/product/product.route";
 import { productSchemas } from "./modules/product/product.schema";
 import orderRoutes from "./modules/order/order.route";
 import { orderSchemas } from "./modules/order/order.schema";
+import stockRoutes from "./modules/stocks/stock.route";
+import { stockSchemas } from "./modules/stocks/stock.schema";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -78,6 +80,7 @@ function buildServer() {
     ...customerSchemas,
     ...productSchemas,
     ...orderSchemas,
+    ...stockSchemas,
   ]) {
     server.addSchema(schema);
   }
@@ -86,6 +89,7 @@ function buildServer() {
   server.register(customerRoutes, { prefix: "api/customers" });
   server.register(productRoutes, { prefix: "api/products" });
   server.register(orderRoutes, { prefix: "api/orders" });
+  server.register(stockRoutes, { prefix: "api/stocks" });
 
   //   server.register(
   //     swagger,

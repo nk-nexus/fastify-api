@@ -71,6 +71,7 @@ CREATE TABLE `StockItem` (
     `deletedAt` DATETIME(3) NULL,
     `productId` INTEGER NOT NULL,
 
+    UNIQUE INDEX `StockItem_code_key`(`code`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

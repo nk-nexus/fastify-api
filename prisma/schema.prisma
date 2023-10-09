@@ -72,7 +72,7 @@ model Product {
 
 model StockItem {
   id        Int        @id @default(autoincrement())
-  code      String     @db.VarChar(50)
+  code      String     @unique @db.VarChar(50)
   details   String?    @db.Text()
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
