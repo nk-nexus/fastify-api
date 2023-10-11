@@ -1,17 +1,19 @@
 -- CreateTable
-CREATE TABLE `Customer` (
+CREATE TABLE `User` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NULL,
     `email` VARCHAR(255) NOT NULL,
     `password` VARCHAR(512) NOT NULL,
     `salt` VARCHAR(119) NOT NULL,
+    `role` ENUM('CUSTOMER', 'STAFF', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
     `phone` VARCHAR(20) NULL,
     `address` TEXT NULL,
+    `loginAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `Customer_email_key`(`email`),
-    UNIQUE INDEX `Customer_password_key`(`password`),
+    UNIQUE INDEX `User_email_key`(`email`),
+    UNIQUE INDEX `User_password_key`(`password`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -23,8 +25,8 @@ CREATE TABLE `Order` (
     `total` INTEGER NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `deletedAt` DATETIME(3) NOT NULL,
-    `customerId` INTEGER NOT NULL,
+    `deletedAt` DATETIME(3) NULL,
+    `userId` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -34,7 +36,6 @@ CREATE TABLE `OrderItem` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    `customerId` INTEGER NOT NULL,
     `orderId` INTEGER NOT NULL,
     `productId` INTEGER NOT NULL,
     `stockItemsId` INTEGER NULL,
@@ -49,7 +50,7 @@ CREATE TABLE `Product` (
     `name` VARCHAR(119) NOT NULL,
     `brand` VARCHAR(119) NOT NULL,
     `vendor` VARCHAR(119) NOT NULL,
-    `type` ENUM('CPU', 'GPU', 'RAM', 'M2', 'SSD', 'HDD', 'MOTHERBOARD', 'POWER_SUPPLY', 'UPS', 'MONITOR', 'CASE') NOT NULL,
+    `type` ENUM('CPU', 'GPU', 'RAM', 'M2', 'SSD', 'HDD', 'MOTHERBOARD', 'POWER_SUPPLY', 'MONITOR', 'CASE', 'UPS') NOT NULL,
     `price` INTEGER NOT NULL,
     `tags` TEXT NOT NULL,
     `details` JSON NOT NULL,
@@ -76,10 +77,7 @@ CREATE TABLE `StockItem` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `Order` ADD CONSTRAINT `Order_customerId_fkey` FOREIGN KEY (`customerId`) REFERENCES `Customer`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_customerId_fkey` FOREIGN KEY (`customerId`) REFERENCES `Customer`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Order` ADD CONSTRAINT `Order_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
