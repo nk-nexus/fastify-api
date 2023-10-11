@@ -2,14 +2,16 @@ import Fastify, { FastifyRequest, FastifyReply } from "fastify";
 import fjwt, { JWT } from "@fastify/jwt";
 import fs from "fs";
 import pino from "pino";
-import { customerSchemas } from "./modules/customer/customer.schema";
-import customerRoutes from "./modules/customer/customer.route";
+import { userSchemas } from "./modules/user/user.schema";
+import userRoutes from "./modules/user/user.route";
 import productRoutes from "./modules/product/product.route";
 import { productSchemas } from "./modules/product/product.schema";
 import orderRoutes from "./modules/order/order.route";
 import { orderSchemas } from "./modules/order/order.schema";
 import stockRoutes from "./modules/stocks/stock.route";
 import { stockSchemas } from "./modules/stocks/stock.schema";
+
+// export type Role = 'customer' | 'staff' | 'admin'
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -24,8 +26,7 @@ declare module "@fastify/jwt" {
   interface FastifyJWT {
     user: {
       id: number;
-      email: string;
-      name: string;
+      // role: Role;
     };
   }
 }
@@ -77,7 +78,7 @@ function buildServer() {
 
   // add schema into server
   for (const schema of [
-    ...customerSchemas,
+    ...userSchemas,
     ...productSchemas,
     ...orderSchemas,
     ...stockSchemas,
@@ -86,7 +87,7 @@ function buildServer() {
   }
 
   // add routes into server
-  server.register(customerRoutes, { prefix: "api/customers" });
+  server.register(userRoutes, { prefix: "api/users" });
   server.register(productRoutes, { prefix: "api/products" });
   server.register(orderRoutes, { prefix: "api/orders" });
   server.register(stockRoutes, { prefix: "api/stocks" });
