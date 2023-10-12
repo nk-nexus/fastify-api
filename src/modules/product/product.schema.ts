@@ -101,7 +101,7 @@ const productIdShcema = z.object({
  */
 
 // Create Product Reply Schema
-const createProductReplySchema = z.object({
+export const createProductReplySchema = z.object({
   ...customProductGenerate,
   ...customProductInput,
 });

@@ -2,6 +2,7 @@ import { buildJsonSchemas } from "fastify-zod";
 import { z } from "zod";
 import { replyRegisterUserSchema } from "../user/user.schema";
 import { OrderStatus } from "@prisma/client";
+import { createProductReplySchema } from "../product/product.schema";
 
 /**
  * ==============================================
@@ -20,6 +21,12 @@ const orderOwnerSchema = {
   user: replyRegisterUserSchema,
 };
 
+const orderCoreSchema = {
+  details: z.string(),
+  status: z.nativeEnum(OrderStatus),
+  total: z.number().min(0),
+}
+
 /**
  * ==============================================
  *  ORDER REQUEST SCHEMA
@@ -36,6 +43,18 @@ const requestCreateInterestedOrderSchema = z.object({
     details: z.string(),
     productIds: z.array(z.number()).nonempty()
 })
+
+// Delete Order Items Request Schema
+const requestDeleteOrderItemsSchema = z.object({
+  orderItemIds: z.array(z.number())
+})
+
+// Order Param Id Schema
+const orderIdSchema = z.object({
+  orderId: z
+    .string()
+    .regex(/^\d+$/),
+});
 
 /**
  * ==============================================
@@ -54,12 +73,21 @@ const getOrderStatusReplySchema = z.array(
   })
 );
 
+// Create Interested Order Reply Schema 
 const replyCreateInterestedOrderSchema = z.object({
-  details: z.string(),
-  status: z.nativeEnum(OrderStatus),
-  total: z.number().min(0),
+  ...orderCoreSchema,
   ...orderGenerateSchema,
   ...orderOwnerSchema,
+})
+
+// Delete Order Items Reply Schema
+const replyDeleteOrderItemsSchema = z.object({
+  ...orderCoreSchema,
+  ...orderGenerateSchema,
+  orderItem: z.array(z.object({
+    ...orderGenerateSchema,
+    product: createProductReplySchema,
+  }))
 })
 
 /**
@@ -69,16 +97,21 @@ const replyCreateInterestedOrderSchema = z.object({
  */
 
 // Get Order Status Input Type
+export type OrderIdInput = z.infer<typeof orderIdSchema>;
 export type GetOrderInput = z.infer<typeof getOrderStatusReqeustSchema>;
 export type CreateInterestOrderInput = z.infer<typeof requestCreateInterestedOrderSchema>;
+export type DeleteOrderItemsInput = z.infer<typeof requestDeleteOrderItemsSchema>;
 
 // Build Order Schemas
 export const { schemas: orderSchemas, $ref } = buildJsonSchemas(
   {
+    orderIdSchema,
     getOrderStatusReqeustSchema,
     getOrderStatusReplySchema,
     requestCreateInterestedOrderSchema,
-    replyCreateInterestedOrderSchema
+    replyCreateInterestedOrderSchema,
+    requestDeleteOrderItemsSchema,
+    replyDeleteOrderItemsSchema,
   },
   { $id: "order" }
 );

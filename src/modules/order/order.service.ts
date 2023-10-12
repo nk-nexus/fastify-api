@@ -1,6 +1,11 @@
 import { OrderStatus } from "@prisma/client";
 import prisma from "../utils/prisma";
-import { CreateInterestOrderInput, GetOrderInput } from "./order.schema";
+import {
+  CreateInterestOrderInput,
+  DeleteOrderItemsInput,
+  GetOrderInput,
+} from "./order.schema";
+import { throws } from "assert";
 
 /**
  * Get Order Input
@@ -59,8 +64,45 @@ export async function createInterestedOrder(
           data: { productId: product.id, orderId: order.id },
         });
       }
-      return null
+      return null;
     })
   );
   return { ...order, orderItems };
+}
+
+export async function deleteOrderItems(
+  body: DeleteOrderItemsInput & { orderId: number; ownerId: number }
+) {
+  const { orderId, ownerId, orderItemIds } = body;
+  // verify order id
+  let order = await prisma.order.findFirst({
+    where: {
+      status: OrderStatus.INTERESTED,
+      id: orderId,
+      ownerId,
+    },
+    include: {
+      orderItem: {
+        include: { product: true },
+      },
+    },
+  });
+
+  if (!order) {
+    throw new Error("Order ID does not exist!");
+  }
+
+  // delete multiple order items
+  await prisma.orderItem.deleteMany({
+    where: {
+      id: { in: orderItemIds },
+      orderId,
+    },
+  });
+
+  order.orderItem = order.orderItem.filter(
+    ({ id }) => !orderItemIds.includes(id)
+  );
+
+  return { ...order, };
 }
