@@ -49,7 +49,7 @@ export async function loginUserHandler(
 
   if (correctPassword) {
     // generate access token
-    return { accessToken: request.jwt.sign({ id: user.id }) };
+    return { accessToken: request.jwt.sign({ id: user.id, role: user.role }) };
   }
 
   return reply.code(401).send({

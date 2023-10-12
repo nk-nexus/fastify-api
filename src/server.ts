@@ -10,8 +10,7 @@ import orderRoutes from "./modules/order/order.route";
 import { orderSchemas } from "./modules/order/order.schema";
 import stockRoutes from "./modules/stocks/stock.route";
 import { stockSchemas } from "./modules/stocks/stock.schema";
-
-// export type Role = 'customer' | 'staff' | 'admin'
+import { UserRole } from "@prisma/client";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -19,6 +18,7 @@ declare module "fastify" {
   }
   export interface FastifyInstance {
     authenticate: any;
+    authorize: any;
   }
 }
 
@@ -26,7 +26,7 @@ declare module "@fastify/jwt" {
   interface FastifyJWT {
     user: {
       id: number;
-      // role: Role;
+      role: UserRole;
     };
   }
 }
@@ -65,6 +65,17 @@ function buildServer() {
     }
   );
 
+  // adding custom decorators to protect some routes
+  server.decorate(
+    "authorize",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const user = request.user
+      if (user.role === UserRole.CUSTOMER) {
+        throw new Error('Unauthorized')
+      }
+    }
+  );
+
   // add check health server status
   server.get("/healthz", function () {
     return { status: "OK" };
@@ -78,7 +89,12 @@ function buildServer() {
 
   // Register the onError hook
   server.addHook("onError", (request, reply, error, done) => {
-    if (error.message.includes('does not exist')) {
+    if (error.message.includes('Unauthorized')) {
+      reply.code(401).send({
+        error: 'Unauthorized',
+        message: error.message,
+      })
+    } else if (error.message.includes('does not exist')) {
       reply.code(404).send({
         error: 'Not Found',
         message: error.message,
