@@ -3,7 +3,9 @@ import prisma from "../utils/prisma";
 import {
   CreateInterestOrderInput,
   DeleteOrderItemsInput,
+  FindOrderInput,
   GetOrderInput,
+  OrderIdInput,
 } from "./order.schema";
 import { throws } from "assert";
 
@@ -40,9 +42,9 @@ export async function getOrderStatus(
 }
 
 export async function createInterestedOrder(
-  body: CreateInterestOrderInput & { ownerId: number }
+  data: CreateInterestOrderInput & { ownerId: number }
 ) {
-  const { productIds, details, ownerId } = body;
+  const { productIds, details, ownerId } = data;
   // verify product id
   let total = 0;
   const products = await Promise.all(
@@ -70,13 +72,35 @@ export async function createInterestedOrder(
   return { ...order, orderItems };
 }
 
+export async function cancelOrder(data: FindOrderInput) {
+  const { orderId, ownerId } = data;
+  // verify order id
+  const order = await prisma.order.findFirst({
+    where: {
+      ownerId,
+      id: orderId,
+      deletedAt: null,
+      status: { in: [OrderStatus.ORDERED, OrderStatus.PURCHASED] },
+    },
+  });
+  if (!order) {
+    throw new Error("Order ID does not exist!");
+  }
+  // cancel order
+  return prisma.order.update({
+    where: { id: orderId },
+    data: { deletedAt: new Date() },
+  });
+}
+
 export async function deleteOrderItems(
-  body: DeleteOrderItemsInput & { orderId: number; ownerId: number }
+  data: DeleteOrderItemsInput & FindOrderInput
 ) {
-  const { orderId, ownerId, orderItemIds } = body;
+  const { orderId, ownerId, orderItemIds } = data;
   // verify order id
   let order = await prisma.order.findFirst({
     where: {
+      deletedAt: null,
       status: OrderStatus.INTERESTED,
       id: orderId,
       ownerId,
@@ -104,5 +128,5 @@ export async function deleteOrderItems(
     ({ id }) => !orderItemIds.includes(id)
   );
 
-  return { ...order, };
+  return { ...order };
 }

@@ -14,6 +14,7 @@ const orderGenerateSchema = {
   id: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  deletedAt: z.date().optional()
 };
 
 const orderOwnerSchema = {
@@ -49,6 +50,12 @@ const requestDeleteOrderItemsSchema = z.object({
   orderItemIds: z.array(z.number())
 })
 
+// Find Order Input Schema
+const orderInputSchema = z.object({
+  ownerId: z.number(),
+  orderId: z.number(),
+})
+
 // Order Param Id Schema
 const orderIdSchema = z.object({
   orderId: z
@@ -80,6 +87,12 @@ const replyCreateInterestedOrderSchema = z.object({
   ...orderOwnerSchema,
 })
 
+// Update Order Reply Schema
+const replyUpdateOrderSchema = z.object({
+  ...orderCoreSchema,
+  ...orderGenerateSchema,
+})
+
 // Delete Order Items Reply Schema
 const replyDeleteOrderItemsSchema = z.object({
   ...orderCoreSchema,
@@ -98,6 +111,7 @@ const replyDeleteOrderItemsSchema = z.object({
 
 // Get Order Status Input Type
 export type OrderIdInput = z.infer<typeof orderIdSchema>;
+export type FindOrderInput = z.infer<typeof orderInputSchema>;
 export type GetOrderInput = z.infer<typeof getOrderStatusReqeustSchema>;
 export type CreateInterestOrderInput = z.infer<typeof requestCreateInterestedOrderSchema>;
 export type DeleteOrderItemsInput = z.infer<typeof requestDeleteOrderItemsSchema>;
@@ -112,6 +126,7 @@ export const { schemas: orderSchemas, $ref } = buildJsonSchemas(
     replyCreateInterestedOrderSchema,
     requestDeleteOrderItemsSchema,
     replyDeleteOrderItemsSchema,
+    replyUpdateOrderSchema,
   },
   { $id: "order" }
 );

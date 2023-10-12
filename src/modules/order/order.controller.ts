@@ -5,7 +5,12 @@ import {
   GetOrderInput,
   OrderIdInput,
 } from "./order.schema";
-import { createInterestedOrder, deleteOrderItems, getOrderStatus } from "./order.service";
+import {
+  cancelOrder,
+  createInterestedOrder,
+  deleteOrderItems,
+  getOrderStatus,
+} from "./order.service";
 
 export async function getOrderStatusHandler(
   request: FastifyRequest<{ Querystring: GetOrderInput }>,
@@ -14,12 +19,8 @@ export async function getOrderStatusHandler(
   const { status } = request.query;
   const { id } = request.user;
 
-  try {
-    const orders = await getOrderStatus({ ownerId: id, status });
-    return reply.code(200).send(orders);
-  } catch (error) {
-    return reply.code(500).send(error);
-  }
+  const orders = await getOrderStatus({ ownerId: id, status });
+  return reply.code(200).send(orders);
 }
 
 export async function createInterestedOrderHandler(
@@ -29,15 +30,28 @@ export async function createInterestedOrderHandler(
   const { id: ownerId } = request.user;
   const { body } = request;
 
-  try {
-    const order = await createInterestedOrder({
-      ...body,
-      ownerId,
-    });
-    return reply.code(200).send(order);
-  } catch (error) {
-    return reply.code(500).send(error);
-  }
+  const order = await createInterestedOrder({
+    ...body,
+    ownerId,
+  });
+  return reply.code(200).send(order);
+}
+
+export async function cancelOrderHandler(
+  request: FastifyRequest<{
+    Params: OrderIdInput;
+  }>,
+  reply: FastifyReply
+) {
+  const {
+    params: { orderId },
+    user,
+  } = request;
+  const order = await cancelOrder({
+    orderId: parseInt(orderId),
+    ownerId: user.id,
+  });
+  return reply.code(200).send(order);
 }
 
 export async function deleteOrderItemsHandler(
@@ -47,11 +61,15 @@ export async function deleteOrderItemsHandler(
   }>,
   reply: FastifyReply
 ) {
-  const { params: { orderId }, body, user } = request
+  const {
+    params: { orderId },
+    body,
+    user,
+  } = request;
   const order = await deleteOrderItems({
     orderId: parseInt(orderId),
     ownerId: user.id,
     ...body,
   });
-  return reply.code(200).send(order)
+  return reply.code(200).send(order);
 }

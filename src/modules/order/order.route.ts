@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import {
+  cancelOrderHandler,
   createInterestedOrderHandler,
   deleteOrderItemsHandler,
   getOrderStatusHandler,
@@ -32,6 +33,16 @@ const createInterestedOrderOpts = (server: FastifyInstance) => ({
   },
 });
 
+const cancelOrderOpts = (server: FastifyInstance) => ({
+  preHandler: [server.authenticate],
+  schema: {
+    params: $ref("orderIdSchema"),
+    response: {
+      200: $ref("replyUpdateOrderSchema"),
+    },
+  },
+});
+
 const deleteOrderItemsOpts = (server: FastifyInstance) => ({
   preHandler: [server.authenticate, server.authorize],
   schema: {
@@ -58,6 +69,8 @@ async function orderRoutes(server: FastifyInstance) {
     createInterestedOrderOpts(server),
     createInterestedOrderHandler
   );
+  // Cancel Order (can cancel only order status = [ORDERED,PURCHASE])
+  server.patch("/:orderId/cancel", cancelOrderOpts(server), cancelOrderHandler);
   // Delete Order Items (can delete only order status = "INTERESTED")
   server.delete(
     "/:orderId/items",
