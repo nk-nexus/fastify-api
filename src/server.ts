@@ -76,6 +76,24 @@ function buildServer() {
     return next();
   });
 
+  // Register the onError hook
+  server.addHook("onError", (request, reply, error, done) => {
+    if (error.message.includes('does not exist')) {
+      reply.code(404).send({
+        error: 'Not Found',
+        message: error.message,
+      })
+    } else {
+      // Send a custom error response to the client
+      reply.code(500).send({
+        error: "Internal Server Error",
+        message: error.message,
+      });
+    }
+    // Finish the request-response cycle
+    done();
+  });
+
   // add schema into server
   for (const schema of [
     ...userSchemas,
