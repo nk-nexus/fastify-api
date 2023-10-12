@@ -1,34 +1,23 @@
-/**
- * ==============================================
- *  ORDER ENUM TYPE
- * ==============================================
- */
-
 import { buildJsonSchemas } from "fastify-zod";
 import { z } from "zod";
-import { createCustomerResponseSchema } from "../customer/customer.schema";
-
-export enum OrderStatus {
-  INTERESTED = "INTERESTED",
-  ORDERED = "ORDERED",
-  PURCHASED = "PURCHASED",
-  COMPLETED = "COMPLETED",
-}
+import { replyRegisterUserSchema } from "../user/user.schema";
+import { OrderStatus } from "@prisma/client";
 
 /**
  * ==============================================
  *  CUSTOM ORDER SCHEMA
  * ==============================================
  */
-const customOrderGenerate = {
+
+const orderGenerateSchema = {
   id: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
 };
 
-const customOrderCustomer = {
-  customerId: z.number(),
-  customer: createCustomerResponseSchema,
+const orderOwnerSchema = {
+  userId: z.number(),
+  user: replyRegisterUserSchema,
 };
 
 /**
@@ -42,6 +31,12 @@ const getOrderStatusReqeustSchema = z.object({
   status: z.string().regex(/^(i|o|p|c)(?:,(i|o|p|c))*$/),
 });
 
+// Create Interested Order Request Schema
+const requestCreateInterestedOrderSchema = z.object({
+    details: z.string(),
+    productIds: z.array(z.number()).nonempty()
+})
+
 /**
  * ==============================================
  *  ORDER REPLAY SCHEMA
@@ -54,10 +49,18 @@ const getOrderStatusReplySchema = z.array(
     details: z.string(),
     status: z.nativeEnum(OrderStatus),
     total: z.number().min(0),
-    ...customOrderGenerate,
-    ...customOrderCustomer,
+    ...orderGenerateSchema,
+    ...orderOwnerSchema,
   })
 );
+
+const replyCreateInterestedOrderSchema = z.object({
+  details: z.string(),
+  status: z.nativeEnum(OrderStatus),
+  total: z.number().min(0),
+  ...orderGenerateSchema,
+  ...orderOwnerSchema,
+})
 
 /**
  * ==============================================
@@ -67,12 +70,15 @@ const getOrderStatusReplySchema = z.array(
 
 // Get Order Status Input Type
 export type GetOrderInput = z.infer<typeof getOrderStatusReqeustSchema>;
+export type CreateInterestOrderInput = z.infer<typeof requestCreateInterestedOrderSchema>;
 
 // Build Order Schemas
 export const { schemas: orderSchemas, $ref } = buildJsonSchemas(
   {
     getOrderStatusReqeustSchema,
     getOrderStatusReplySchema,
+    requestCreateInterestedOrderSchema,
+    replyCreateInterestedOrderSchema
   },
   { $id: "order" }
 );

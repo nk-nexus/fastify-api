@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { getOrderStatusHandler } from "./order.controller";
+import { createInterestedOrderHandler, getOrderStatusHandler } from "./order.controller";
 import { $ref } from "./order.schema";
 
 /**
@@ -18,6 +18,16 @@ const getOrderStatusOpts = (server: FastifyInstance) => ({
   },
 });
 
+const createInterestedOrderOpts = (server: FastifyInstance) => ({
+  preHandler: [server.authenticate],
+  schema: {
+    body: $ref('requestCreateInterestedOrderSchema'),
+    response: {
+      201: $ref('replyCreateInterestedOrderSchema'),
+    },
+  },
+})
+
 /**
  * ==============================================
  *  Order Routes
@@ -27,6 +37,8 @@ const getOrderStatusOpts = (server: FastifyInstance) => ({
 async function orderRoutes(server: FastifyInstance) {
   // Get Order by Status
   server.get("/", getOrderStatusOpts(server), getOrderStatusHandler);
+  // Create Order with Status Intested
+  server.post("/", createInterestedOrderOpts(server), createInterestedOrderHandler)
 }
 
 export default orderRoutes;

@@ -70,7 +70,7 @@ export async function updateProductDetailsHandler(
     });
     return reply.code(200).send(product);
   } catch (error) {
-    return reply.code(500).send(500);
+    return reply.code(500).send(error);
   }
 }
 

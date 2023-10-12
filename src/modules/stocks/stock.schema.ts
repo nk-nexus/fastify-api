@@ -22,7 +22,7 @@ const customStockItemGenerate = {
 
 /**
  * ==============================================
- *  PRODUCT REQUEST SCHEMA
+ *  STOCK REQUEST SCHEMA
  * ==============================================
  */
 
@@ -32,7 +32,7 @@ const createStockItemsRequestSchema = z.array(createStockItemSchema).nonempty();
 
 /**
  * ==============================================
- *  PRODUCT REPLAY SCHEMA
+ *  STOCK REPLAY SCHEMA
  * ==============================================
  */
 
