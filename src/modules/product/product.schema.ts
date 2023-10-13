@@ -28,7 +28,7 @@ export enum ProductType {
  * ==============================================
  */
 
-const customProductInput = {
+export const customProductInput = {
   name: z.string(),
   brand: z.string(),
   vendor: z.string(),
@@ -39,7 +39,7 @@ const customProductInput = {
   purchasable: z.boolean(),
 };
 
-const customProductGenerate = {
+export const customProductGenerate = {
   id: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -77,7 +77,9 @@ const getProductRequestSchema = z.object({
 });
 
 // Create Product Request Schema
-const createProductRequestSchema = z.object(customProductInput);
+const requestCreateProductSchema = z
+  .array(z.object(customProductInput))
+  .nonempty();
 
 // Update Product Details Request Schema
 const updateProductDetailsRequestSchema = z.object(customProductDetails);
@@ -89,9 +91,7 @@ const updateProductPurchasableRequestSchema = z.object({
 
 // Product Param Id Schema
 const productIdShcema = z.object({
-  productId: z
-    .string()
-    .regex(/^\d+$/),
+  productId: z.string().regex(/^\d+$/),
 });
 
 /**
@@ -101,13 +101,17 @@ const productIdShcema = z.object({
  */
 
 // Create Product Reply Schema
-export const createProductReplySchema = z.object({
-  ...customProductGenerate,
-  ...customProductInput,
-});
+const replyCreateProductSchema = z.object({
+  totalCreated: z.number()
+})
 
 // Get Product Reply Schema
-const getProductReplaySchema = z.array(createProductReplySchema);
+const replayGetProductSchema = z.array(
+  z.object({
+    ...customProductGenerate,
+    ...customProductInput,
+  })
+);
 
 // Update Product Details Reply Schema
 const updateProductDetailsReplySchema = z.object({
@@ -133,7 +137,7 @@ export type ProductIdInput = z.infer<typeof productIdShcema>;
 // Get Product Input Type
 export type GetProductInput = z.infer<typeof getProductRequestSchema>;
 // Create Product Input Type
-export type CreateProductInput = z.infer<typeof createProductRequestSchema>;
+export type CreateProductInput = z.infer<typeof requestCreateProductSchema>;
 // Update Product Details Input Type
 export type UpdateProductDetailsInput = z.infer<
   typeof updateProductDetailsRequestSchema
@@ -148,11 +152,11 @@ export const { schemas: productSchemas, $ref } = buildJsonSchemas(
   {
     productIdShcema,
     getProductRequestSchema,
-    createProductRequestSchema,
+    requestCreateProductSchema,
     updateProductDetailsRequestSchema,
     updateProductPurchasableRequestSchema,
-    createProductReplySchema,
-    getProductReplaySchema,
+    replayGetProductSchema,
+    replyCreateProductSchema,
     updateProductDetailsReplySchema,
     updateProductPurchasableReplySchema,
   },

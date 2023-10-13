@@ -58,7 +58,7 @@ export async function getProductPagination(query: GetProductInput) {
  * @returns a created product
  */
 export async function createProduct(data: CreateProductInput) {
-  return prisma.products.create({ data });
+  return prisma.products.createMany({ data })
 }
 
 /**

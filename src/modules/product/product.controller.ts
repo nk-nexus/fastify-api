@@ -33,8 +33,8 @@ export async function createProductHandler(
   request: FastifyRequest<{ Body: CreateProductInput }>,
   reply: FastifyReply
 ) {
-  const product = await createProduct(request.body);
-  return reply.code(201).send(product);
+  const total = await createProduct(request.body);
+  return reply.code(201).send({ totalCreated: total.count });
 }
 
 /**

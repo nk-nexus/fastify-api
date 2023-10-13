@@ -2,7 +2,7 @@ import { buildJsonSchemas } from "fastify-zod";
 import { z } from "zod";
 import { replyRegisterUserSchema } from "../user/user.schema";
 import { OrderStatus } from "@prisma/client";
-import { createProductReplySchema } from "../product/product.schema";
+import { customProductGenerate, customProductInput } from "../product/product.schema";
 
 /**
  * ==============================================
@@ -108,7 +108,10 @@ const replyDeleteOrderItemsSchema = z.object({
   ...orderGenerateSchema,
   orderItem: z.array(z.object({
     ...orderGenerateSchema,
-    product: createProductReplySchema,
+    product: z.object({
+      ...customProductGenerate,
+      ...customProductInput,
+    }),
   }))
 })
 

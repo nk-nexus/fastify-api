@@ -18,25 +18,25 @@ const getProductOpts = {
   schema: {
     querystring: $ref("getProductRequestSchema"),
     response: {
-      200: $ref("getProductRequestSchema"),
+      200: $ref("replayGetProductSchema"),
     },
   },
 };
 
 // Create Product Shorthand Options
 const createProductOpts = (server: FastifyInstance) => ({
-  preHandler: [server.authenticate],
+  preHandler: [server.authenticate, server.authorize],
   schema: {
-    body: $ref("createProductRequestSchema"),
+    body: $ref("requestCreateProductSchema"),
     response: {
-      201: $ref("createProductReplySchema"),
+      201: $ref("replyCreateProductSchema"),
     },
   },
 });
 
 // Update Product Details Shorthan Options
 const updateProductDetailsOpts = (server: FastifyInstance) => ({
-  preHandler: [server.authenticate],
+  preHandler: [server.authenticate, server.authorize],
   schema: {
     params: $ref("productIdShcema"),
     body: $ref("updateProductDetailsRequestSchema"),
@@ -48,7 +48,7 @@ const updateProductDetailsOpts = (server: FastifyInstance) => ({
 
 // Update Product Purchasable Shorthan Options
 const updateProductPurchasableOpts = (server: FastifyInstance) => ({
-  preHandler: [server.authenticate],
+  preHandler: [server.authenticate, server.authorize],
   schema: {
     params: $ref("productIdShcema"),
     querystring: $ref("updateProductPurchasableRequestSchema"),

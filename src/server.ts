@@ -76,11 +76,6 @@ function buildServer() {
     }
   );
 
-  // add check health server status
-  server.get("/healthz", function () {
-    return { status: "OK" };
-  });
-
   // inject jwt data into request
   server.addHook("preHandler", (req, reply, next) => {
     req.jwt = server.jwt;
@@ -123,6 +118,11 @@ function buildServer() {
     server.addSchema(schema);
   }
 
+
+  // add check health server status
+  server.get("/healthz", function () {
+    return { status: "OK" };
+  });
   // add routes into server
   server.register(userRoutes, { prefix: "api/users" });
   server.register(productRoutes, { prefix: "api/products" });

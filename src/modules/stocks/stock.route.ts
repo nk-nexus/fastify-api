@@ -9,7 +9,7 @@ import { $ref } from "./stock.schema";
  */
 
 const createStockItemsOpts = (server: FastifyInstance) => ({
-  preHandler: [server.authenticate],
+  preHandler: [server.authenticate, server.authorize],
   schema: {
     body: $ref("createStockItemsRequestSchema"),
     response: {

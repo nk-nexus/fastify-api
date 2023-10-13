@@ -8,13 +8,13 @@ import { z } from "zod";
  */
 
 const customStockItemCore = {
-  code: z.string().uuid(),
   details: z.string().optional(),
   productId: z.number(),
 };
 
 const customStockItemGenerate = {
   id: z.number().optional(),
+  code: z.string().optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
   deletedAt: z.date().optional(),
