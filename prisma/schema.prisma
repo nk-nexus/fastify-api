@@ -24,7 +24,6 @@ model Users {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   orders    Orders[]
-  Payments  Payments[]
 }
 
 model Orders {
@@ -38,6 +37,7 @@ model Orders {
   owner      Users        @relation(fields: [ownerId], references: [id])
   ownerId    Int
   orderItems OrderItems[]
+  Payments   Payments[]
 }
 
 model OrderItems {
@@ -60,8 +60,8 @@ model Payments {
   status    PaymentStatus
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-  user      Users         @relation(fields: [userId], references: [id])
-  userId    Int
+  order     Orders        @relation(fields: [orderId], references: [id])
+  orderId   Int
 }
 
 model Products {
