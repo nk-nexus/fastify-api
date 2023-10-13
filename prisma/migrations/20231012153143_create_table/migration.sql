@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE `User` (
+CREATE TABLE `Users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NULL,
     `email` VARCHAR(255) NOT NULL,
@@ -12,17 +12,17 @@ CREATE TABLE `User` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `User_email_key`(`email`),
-    UNIQUE INDEX `User_password_key`(`password`),
+    UNIQUE INDEX `Users_email_key`(`email`),
+    UNIQUE INDEX `Users_password_key`(`password`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Order` (
+CREATE TABLE `Orders` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `details` TEXT NULL,
     `status` ENUM('INTERESTED', 'ORDERED', 'PURCHASED', 'COMPLETED') NOT NULL DEFAULT 'INTERESTED',
-    `total` INTEGER NOT NULL,
+    `amount` INTEGER NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `deletedAt` DATETIME(3) NULL,
@@ -32,20 +32,34 @@ CREATE TABLE `Order` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `OrderItem` (
+CREATE TABLE `OrderItems` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `orderId` INTEGER NOT NULL,
     `productId` INTEGER NOT NULL,
-    `stockItemsId` INTEGER NULL,
+    `stockItemId` INTEGER NULL,
 
-    UNIQUE INDEX `OrderItem_stockItemsId_key`(`stockItemsId`),
+    UNIQUE INDEX `OrderItems_stockItemId_key`(`stockItemId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Product` (
+CREATE TABLE `Payments` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `method` VARCHAR(119) NOT NULL,
+    `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `status` ENUM('PENDING', 'SUCCESSFUL', 'FAILED') NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `userId` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Products` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(119) NOT NULL,
     `brand` VARCHAR(119) NOT NULL,
@@ -58,12 +72,12 @@ CREATE TABLE `Product` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
-    FULLTEXT INDEX `Product_tags_idx`(`tags`),
+    FULLTEXT INDEX `Products_tags_idx`(`tags`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `StockItem` (
+CREATE TABLE `StockItems` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(50) NOT NULL,
     `details` TEXT NULL,
@@ -72,21 +86,24 @@ CREATE TABLE `StockItem` (
     `deletedAt` DATETIME(3) NULL,
     `productId` INTEGER NOT NULL,
 
-    UNIQUE INDEX `StockItem_code_key`(`code`),
+    UNIQUE INDEX `StockItems_code_key`(`code`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `Order` ADD CONSTRAINT `Order_ownerId_fkey` FOREIGN KEY (`ownerId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Orders` ADD CONSTRAINT `Orders_ownerId_fkey` FOREIGN KEY (`ownerId`) REFERENCES `Users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `OrderItems` ADD CONSTRAINT `OrderItems_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Orders`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `OrderItems` ADD CONSTRAINT `OrderItems_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_stockItemsId_fkey` FOREIGN KEY (`stockItemsId`) REFERENCES `StockItem`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `OrderItems` ADD CONSTRAINT `OrderItems_stockItemId_fkey` FOREIGN KEY (`stockItemId`) REFERENCES `StockItems`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `StockItem` ADD CONSTRAINT `StockItem_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Payments` ADD CONSTRAINT `Payments_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `StockItems` ADD CONSTRAINT `StockItems_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Products`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
