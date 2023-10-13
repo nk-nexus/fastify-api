@@ -3,17 +3,16 @@ import { CreateStockItemsInput } from "./stock.schema";
 
 /**
  * Create Stock Items
- * @param data contails array of craete stock items data
  * @returns created and upcreated data if productId not exist
  */
 export async function createStockItems(data: CreateStockItemsInput) {
   return Promise.all(
     data.map(async ({ productId, ...rest }) => {
-      const product = await prisma.product.findFirst({
+      const product = await prisma.products.findFirst({
         where: { id: productId },
       });
       if (product) {
-        return prisma.stockItem.create({ data: { productId, ...rest } });
+        return prisma.stockItems.create({ data: { productId, ...rest } });
       }
       return {
         id: null,

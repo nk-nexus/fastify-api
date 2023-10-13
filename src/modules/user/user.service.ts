@@ -7,13 +7,13 @@ export async function registerUser(input: RegisterUserInput) {
   const { password, ...rest } = input;
   const { hash, salt } = hashPassword(password);
 
-  return prisma.user.create({
+  return prisma.users.create({
     data: { ...rest, salt, password: hash, role: UserRole.CUSTOMER },
   });
 }
 
 export async function findUserByEmail(email: string) {
-  return prisma.user.findUnique({
+  return prisma.users.findUnique({
     where: { email },
   });
 }

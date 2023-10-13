@@ -11,14 +11,8 @@ export async function registerUserHandler(
   request: FastifyRequest<{ Body: RegisterUserInput }>,
   reply: FastifyReply
 ) {
-  const body = request.body;
-
-  try {
-    const user = await registerUser(body);
-    return reply.code(201).send(user);
-  } catch (error) {
-    return reply.code(500).send(error);
-  }
+  const user = await registerUser(request.body);
+  return reply.code(201).send(user);
 }
 
 /**
@@ -29,27 +23,23 @@ export async function loginUserHandler(
   request: FastifyRequest<{ Body: LoginUserInput }>,
   reply: FastifyReply
 ) {
-  const body = request.body;
+  const { email, password } = request.body;
 
   // find a user by email
-  const user = await findUserByEmail(body.email);
+  const user = await findUserByEmail(email);
 
-  if (!user) {
-    return reply.code(401).send({
-      message: "Invalid email or password",
+  if (user) {
+    // verify password
+    const correctPassword = verifyPassword({
+      candidatePassword: password,
+      salt: user.salt,
+      hash: user.password,
     });
-  }
 
-  // verify password
-  const correctPassword = verifyPassword({
-    candidatePassword: body.password,
-    salt: user.salt,
-    hash: user.password,
-  });
-
-  if (correctPassword) {
-    // generate access token
-    return { accessToken: request.jwt.sign({ id: user.id, role: user.role }) };
+    if (correctPassword) {
+      // generate access token
+      return { accessToken: request.jwt.sign({ id: user.id, role: user.role }) };
+    }
   }
 
   return reply.code(401).send({

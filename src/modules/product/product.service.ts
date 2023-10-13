@@ -9,7 +9,6 @@ import {
 
 /**
  * Get Procudt Pagination
- * @param query includes type, text, and tags
  * @returns product array with total stock
  */
 export async function getProductPagination(query: GetProductInput) {
@@ -38,7 +37,7 @@ export async function getProductPagination(query: GetProductInput) {
     };
   }
 
-  const products = await prisma.product.findMany({
+  const products = await prisma.products.findMany({
     where: whereConditions,
     take: limit,
     skip: (page - 1) * limit,
@@ -46,7 +45,7 @@ export async function getProductPagination(query: GetProductInput) {
 
   return Promise.all(
     products.map(async ({ id, ...rest }) => {
-      const inStock = await prisma.stockItem.count({
+      const inStock = await prisma.stockItems.count({
         where: { productId: id, deletedAt: null },
       });
       return { id, ...rest, inStock };
@@ -56,23 +55,21 @@ export async function getProductPagination(query: GetProductInput) {
 
 /**
  * Create Product
- * @param data the object that matchs for creating a product
  * @returns a created product
  */
 export async function createProduct(data: CreateProductInput) {
-  return prisma.product.create({ data });
+  return prisma.products.create({ data });
 }
 
 /**
  * Update Product Details
- * @param data contains update value for the product
  * @returns a updated product
  */
 export async function updateProductDetails(
   data: UpdateProductDetailsInput & ProductIdInput
 ) {
   const { productId: id, ...updateData } = data;
-  return prisma.product.update({
+  return prisma.products.update({
     where: { id: parseInt(id) },
     data: updateData,
   });
@@ -80,14 +77,13 @@ export async function updateProductDetails(
 
 /**
  * Updaate Product Purchasable
- * @param data contains productId and purchasable status
  * @returns a updated product
  */
 export async function updateProductPurchasable(
   data: UpdateProductPurchasableInput & ProductIdInput
 ) {
   const { status, productId: id } = data;
-  return prisma.product.update({
+  return prisma.products.update({
     where: { id: parseInt(id) },
     data: { purchasable: status == "y" },
   });

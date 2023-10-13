@@ -10,12 +10,6 @@ export async function createStockItemsHandler(
   request: FastifyRequest<{ Body: CreateStockItemsInput }>,
   reply: FastifyReply
 ) {
-  const body = request.body;
-
-  try {
-    const stockItems = await createStockItems(body);
-    return reply.code(201).send(stockItems);
-  } catch (error) {
-    return reply.code(500).send(error);
-  }
+  const stockItems = await createStockItems(request.body);
+  return reply.code(201).send(stockItems);
 }
