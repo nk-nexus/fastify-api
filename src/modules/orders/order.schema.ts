@@ -1,8 +1,8 @@
 import { buildJsonSchemas } from "fastify-zod";
 import { z } from "zod";
-import { replyRegisterUserSchema } from "../user/user.schema";
+import { replyRegisterUserSchema } from "../users/user.schema";
 import { OrderStatus } from "@prisma/client";
-import { customProductGenerate, customProductInput } from "../product/product.schema";
+import { customProductGenerate, customProductInput } from "../products/product.schema";
 
 /**
  * ==============================================
