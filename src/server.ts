@@ -69,9 +69,9 @@ function buildServer() {
   server.decorate(
     "authorize",
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const user = request.user
+      const user = request.user;
       if (user.role === UserRole.CUSTOMER) {
-        throw new Error('Unauthorized')
+        throw new Error("Unauthorized");
       }
     }
   );
@@ -89,16 +89,19 @@ function buildServer() {
 
   // Register the onError hook
   server.addHook("onError", (request, reply, error, done) => {
-    if (error.message.includes('Unauthorized')) {
+    if (error.message.includes("Unauthorized")) {
       reply.code(401).send({
-        error: 'Unauthorized',
+        error: "Unauthorized",
         message: error.message,
-      })
-    } else if (error.message.includes('does not exist')) {
+      });
+    } else if (
+      error.message.includes("does not exist") ||
+      error.message.includes("not found")
+    ) {
       reply.code(404).send({
-        error: 'Not Found',
+        error: "Not Found",
         message: error.message,
-      })
+      });
     } else {
       // Send a custom error response to the client
       reply.code(500).send({

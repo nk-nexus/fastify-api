@@ -1,19 +1,22 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import {
-  CreateInterestOrderInput,
-  DeleteOrderItemsInput,
-  GetOrderInput,
-  OrderIdInput,
+  CreateInterestOrderBody,
+  DeleteOrderItemsBody,
+  GetOrderQuery,
+  OrderIdParams,
 } from "./order.schema";
 import {
   cancelOrder,
+  completeOrder,
+  confirmOrder,
   createInterestedOrder,
   deleteOrderItems,
   getOrderStatus,
+  // purchaseOrder,
 } from "./order.service";
 
 export async function getOrderStatusHandler(
-  request: FastifyRequest<{ Querystring: GetOrderInput }>,
+  request: FastifyRequest<{ Querystring: GetOrderQuery }>,
   reply: FastifyReply
 ) {
   const { status } = request.query;
@@ -24,7 +27,7 @@ export async function getOrderStatusHandler(
 }
 
 export async function createInterestedOrderHandler(
-  request: FastifyRequest<{ Body: CreateInterestOrderInput }>,
+  request: FastifyRequest<{ Body: CreateInterestOrderBody }>,
   reply: FastifyReply
 ) {
   const { id: ownerId } = request.user;
@@ -37,9 +40,39 @@ export async function createInterestedOrderHandler(
   return reply.code(200).send(order);
 }
 
+export async function completeOrderHandler(
+  request: FastifyRequest<{
+    Params: OrderIdParams;
+  }>,
+  reply: FastifyReply
+) {
+  const { orderId } = request.params;
+  const { user } = request;
+  const order = await completeOrder({
+    orderId: parseInt(orderId),
+    ownerId: user.id,
+  });
+  return reply.code(200).send(order);
+}
+
+export async function confirmOrderHandler(
+  request: FastifyRequest<{
+    Params: OrderIdParams;
+  }>,
+  reply: FastifyReply
+) {
+  const { orderId } = request.params;
+  const { user } = request;
+  const order = await confirmOrder({
+    orderId: parseInt(orderId),
+    ownerId: user.id,
+  });
+  return reply.code(200).send(order);
+}
+
 export async function cancelOrderHandler(
   request: FastifyRequest<{
-    Params: OrderIdInput;
+    Params: OrderIdParams;
   }>,
   reply: FastifyReply
 ) {
@@ -56,8 +89,8 @@ export async function cancelOrderHandler(
 
 export async function deleteOrderItemsHandler(
   request: FastifyRequest<{
-    Params: OrderIdInput;
-    Body: DeleteOrderItemsInput;
+    Params: OrderIdParams;
+    Body: DeleteOrderItemsBody;
   }>,
   reply: FastifyReply
 ) {

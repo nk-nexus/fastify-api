@@ -1,21 +1,18 @@
 import { OrderStatus } from "@prisma/client";
 import prisma from "../utils/prisma";
 import {
-  CreateInterestOrderInput,
-  DeleteOrderItemsInput,
-  FindOrderInput,
-  GetOrderInput,
-  OrderIdInput,
+  CreateInterestOrderBody,
+  DeleteOrderItemsBody,
+  GetOrderQuery,
+  InputUpdateOrder,
 } from "./order.schema";
-import { throws } from "assert";
 
 /**
  * Get Order Input
- * @param data contains ownerId and status that seperate by comma
  * @returns order arary
  */
 export async function getOrderStatus(
-  data: GetOrderInput & { ownerId: number }
+  data: GetOrderQuery & { ownerId: number }
 ) {
   const { ownerId, status } = data;
   const statusArr = status.split(",").map((s) => {
@@ -30,7 +27,7 @@ export async function getOrderStatus(
         return OrderStatus.INTERESTED;
     }
   });
-  return prisma.order.findMany({
+  return prisma.orders.findMany({
     where: {
       deletedAt: null,
       ownerId,
@@ -41,28 +38,32 @@ export async function getOrderStatus(
   });
 }
 
+/**
+ * Create Order with Status INTERESTED
+ * @returns an order include order items
+ */
 export async function createInterestedOrder(
-  data: CreateInterestOrderInput & { ownerId: number }
+  data: CreateInterestOrderBody & { ownerId: number }
 ) {
   const { productIds, details, ownerId } = data;
   // verify product id
-  let total = 0;
+  let amount = 0;
   const products = await Promise.all(
     productIds.map(async (id) => {
-      const product = await prisma.product.findFirst({ where: { id } });
-      total += product?.price || 0;
+      const product = await prisma.products.findFirst({ where: { id } });
+      amount += product?.price || 0;
       return product;
     })
   );
   // create order
-  const order = await prisma.order.create({
-    data: { details, ownerId, total, status: OrderStatus.INTERESTED },
+  const order = await prisma.orders.create({
+    data: { details, ownerId, amount, status: OrderStatus.INTERESTED },
   });
   // create order items
   const orderItems = await Promise.all(
     products.map((product) => {
       if (product) {
-        return prisma.orderItem.create({
+        return prisma.orderItems.create({
           data: { productId: product.id, orderId: order.id },
         });
       }
@@ -72,33 +73,128 @@ export async function createInterestedOrder(
   return { ...order, orderItems };
 }
 
-export async function cancelOrder(data: FindOrderInput) {
+/**
+ * Confirm Order then match stock items with order items
+ * @returns an order include order items, product, and stock items
+ */
+export async function confirmOrder(data: InputUpdateOrder) {
   const { orderId, ownerId } = data;
-  // verify order id
-  const order = await prisma.order.findFirst({
+  // open transaction for prevent candidate update stock item id
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.orders.update({
+      where: {
+        ownerId,
+        id: orderId,
+        deletedAt: null,
+        status: OrderStatus.INTERESTED,
+      },
+      data: { status: OrderStatus.ORDERED },
+      include: {
+        orderItems: {
+          include: {
+            product: {
+              include: {
+                stockItems: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    await Promise.all(
+      order.orderItems.map((item, index) => {
+        const stockItemId = item.product.stockItems[0]?.id;
+        order.orderItems[index].stockItemId = stockItemId;
+        return tx.orderItems.update({
+          where: { id: item.id },
+          data: { stockItemId },
+        });
+      })
+    );
+
+    return order;
+  });
+}
+
+/**
+ * Complete Order by stamp delete date to each stock items
+ * and change order status to "COMPLETED"
+ * @returns an order include order items
+ */
+export async function completeOrder(data: InputUpdateOrder) {
+  const { orderId, ownerId } = data;
+  // complete order
+  const order = await prisma.orders.update({
+    where: {
+      ownerId,
+      id: orderId,
+      deletedAt: null,
+      status: OrderStatus.PURCHASED,
+    },
+    data: { status: OrderStatus.COMPLETED },
+    include: {
+      orderItems: true
+    }
+  })
+
+  await Promise.all(order.orderItems.map(item => {
+    if (item.stockItemId) {
+      // update this stock item was sold
+      return prisma.stockItems.update({
+        where: { id: item.stockItemId },
+        data: { deletedAt: new Date() }
+      })
+    }
+    // if followed the flow step by step this error should not have occurred
+    throw new Error('Unprocessable stock item id not found')
+  }))
+
+  return order
+}
+
+/**
+ * Cancel Order by remove stock items from order items
+ * @return an order include order items 
+ */
+export async function cancelOrder(data: InputUpdateOrder) {
+  const { orderId, ownerId } = data;
+  // cancel order
+  const order = await prisma.orders.update({
     where: {
       ownerId,
       id: orderId,
       deletedAt: null,
       status: { in: [OrderStatus.ORDERED, OrderStatus.PURCHASED] },
     },
-  });
-  if (!order) {
-    throw new Error("Order ID does not exist!");
-  }
-  // cancel order
-  return prisma.order.update({
-    where: { id: orderId },
     data: { deletedAt: new Date() },
+    include: {
+      orderItems: true,
+    },
   });
+  // remove stock item id from order item
+  await Promise.all(
+    order.orderItems.map((item) => {
+      prisma.orderItems.update({
+        where: { id: item.id },
+        data: { stockItemId: null },
+      });
+    })
+  );
+
+  return order
 }
 
+/**
+ * Delete Order Items
+ * @returns an order include order items
+ */
 export async function deleteOrderItems(
-  data: DeleteOrderItemsInput & FindOrderInput
+  data: DeleteOrderItemsBody & InputUpdateOrder
 ) {
   const { orderId, ownerId, orderItemIds } = data;
   // verify order id
-  let order = await prisma.order.findFirst({
+  let order = await prisma.orders.findFirst({
     where: {
       deletedAt: null,
       status: OrderStatus.INTERESTED,
@@ -106,7 +202,7 @@ export async function deleteOrderItems(
       ownerId,
     },
     include: {
-      orderItem: {
+      orderItems: {
         include: { product: true },
       },
     },
@@ -117,14 +213,14 @@ export async function deleteOrderItems(
   }
 
   // delete multiple order items
-  await prisma.orderItem.deleteMany({
+  await prisma.orderItems.deleteMany({
     where: {
       id: { in: orderItemIds },
       orderId,
     },
   });
 
-  order.orderItem = order.orderItem.filter(
+  order.orderItems = order.orderItems.filter(
     ({ id }) => !orderItemIds.includes(id)
   );
 

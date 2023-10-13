@@ -35,7 +35,7 @@ const orderCoreSchema = {
  */
 
 // Get Order Status Reqeust Schema
-const getOrderStatusReqeustSchema = z.object({
+const requestGetOrderSchema = z.object({
   status: z.string().regex(/^(i|o|p|c)(?:,(i|o|p|c))*$/),
 });
 
@@ -50,8 +50,17 @@ const requestDeleteOrderItemsSchema = z.object({
   orderItemIds: z.array(z.number())
 })
 
-// Find Order Input Schema
-const orderInputSchema = z.object({
+// Update Order Status Request Schema
+const requestUpdateOrderSchema = z.object({
+  status: z.enum([
+    OrderStatus.COMPLETED,
+    OrderStatus.PURCHASED,
+    OrderStatus.ORDERED,
+  ])
+})
+
+// Input Update Order 
+const inputUpdateOrder = z.object({ 
   ownerId: z.number(),
   orderId: z.number(),
 })
@@ -70,7 +79,7 @@ const orderIdSchema = z.object({
  */
 
 // Get Order Status Reply Schema
-const getOrderStatusReplySchema = z.array(
+const replyGetOrderSchema = z.array(
   z.object({
     details: z.string(),
     status: z.nativeEnum(OrderStatus),
@@ -110,22 +119,28 @@ const replyDeleteOrderItemsSchema = z.object({
  */
 
 // Get Order Status Input Type
-export type OrderIdInput = z.infer<typeof orderIdSchema>;
-export type FindOrderInput = z.infer<typeof orderInputSchema>;
-export type GetOrderInput = z.infer<typeof getOrderStatusReqeustSchema>;
-export type CreateInterestOrderInput = z.infer<typeof requestCreateInterestedOrderSchema>;
-export type DeleteOrderItemsInput = z.infer<typeof requestDeleteOrderItemsSchema>;
-
+export type OrderIdParams = z.infer<typeof orderIdSchema>;
+// Get Order Query
+export type GetOrderQuery = z.infer<typeof requestGetOrderSchema>;
+// Update Order Query
+export type UpdateOrderQuery = z.infer<typeof requestUpdateOrderSchema>;
+// Create Interest Order Body
+export type CreateInterestOrderBody = z.infer<typeof requestCreateInterestedOrderSchema>;
+// Delete Order Items Body
+export type DeleteOrderItemsBody = z.infer<typeof requestDeleteOrderItemsSchema>;
+// Input Update Order
+export type InputUpdateOrder = z.infer<typeof inputUpdateOrder>;
 // Build Order Schemas
 export const { schemas: orderSchemas, $ref } = buildJsonSchemas(
   {
     orderIdSchema,
-    getOrderStatusReqeustSchema,
-    getOrderStatusReplySchema,
+    requestGetOrderSchema,
+    replyGetOrderSchema,
     requestCreateInterestedOrderSchema,
     replyCreateInterestedOrderSchema,
     requestDeleteOrderItemsSchema,
     replyDeleteOrderItemsSchema,
+    requestUpdateOrderSchema,
     replyUpdateOrderSchema,
   },
   { $id: "order" }
