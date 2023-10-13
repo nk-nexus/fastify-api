@@ -1,6 +1,6 @@
 import { buildJsonSchemas } from "fastify-zod";
 import { z } from "zod";
-import { pagination } from "../utils/validate";
+import { pagination } from "../../utils/validate";
 
 /**
  * ==============================================

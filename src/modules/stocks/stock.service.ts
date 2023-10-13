@@ -4,7 +4,7 @@
  * *****************************************
  */
 import crypto from "crypto";
-import prisma from "../utils/prisma";
+import prisma from "../../utils/prisma";
 import { CreateStockItemsInput } from "./stock.schema";
 
 /**
