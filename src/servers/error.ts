@@ -15,14 +15,15 @@ export default function errorRegistrations<T extends IErrorRegistration>(
 ) {
   // Register the onError hook
   server.addHook("onError", (request, reply, error, done) => {
-    if (error.message.includes("Unauthorized")) {
+    const errLowcase = error.message.toLocaleLowerCase()
+    if (errLowcase.includes("unauthorized")) {
       reply.code(401);
     } else if (
-      error.message.includes("does not exist") ||
-      error.message.includes("not found")
+      errLowcase.includes("does not exist") ||
+      errLowcase.includes("not found")
     ) {
       reply.code(404);
-    } else if (error.message.includes("does not have enough")) {
+    } else if (errLowcase.includes("does not have enough")) {
       reply.code(422);
     } else {
       reply.code(500);

@@ -12,17 +12,17 @@ datasource db {
 }
 
 model Users {
-  id        Int        @id @default(autoincrement())
-  name      String?    @db.VarChar(50)
-  email     String     @unique @db.VarChar(255)
-  password  String     @unique @db.VarChar(512)
-  salt      String     @db.VarChar(119)
-  role      UserRole   @default(CUSTOMER)
-  phone     String?    @db.VarChar(20)
-  address   String?    @db.Text()
+  id        Int       @id @default(autoincrement())
+  name      String?   @db.VarChar(50)
+  email     String    @unique @db.VarChar(255)
+  password  String    @unique @db.VarChar(512)
+  salt      String    @db.VarChar(119)
+  role      UserRole  @default(CUSTOMER)
+  phone     String?   @db.VarChar(20)
+  address   String?   @db.Text()
   loginAt   DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   orders    Orders[]
 }
 
@@ -30,7 +30,7 @@ model Orders {
   id         Int          @id @default(autoincrement())
   details    String?      @db.Text()
   status     OrderStatus  @default(INTERESTED)
-  amount     Int
+  amount     Decimal      @db.Decimal(10, 2)
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   deletedAt  DateTime?
@@ -70,7 +70,7 @@ model Products {
   brand       String       @db.VarChar(119)
   vendor      String       @db.VarChar(119)
   type        ProductType
-  price       Int
+  price       Decimal      @db.Decimal(10, 2)
   tags        String       @db.Text()
   details     Json
   purchasable Boolean
