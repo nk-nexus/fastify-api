@@ -1,11 +1,13 @@
 import { OrderStatus } from "@prisma/client";
 import prisma from "../../utils/prisma";
 import {
+  AddOrderItemsBody,
   CreateInterestOrderBody,
   DeleteOrderItemsBody,
   GetOrderQuery,
   InputUpdateOrder,
 } from "./order.schema";
+import { verifyOrder } from "./order.util";
 
 /**
  * Get Order Input
@@ -134,28 +136,30 @@ export async function completeOrder(data: InputUpdateOrder) {
     },
     data: { status: OrderStatus.COMPLETED },
     include: {
-      orderItems: true
-    }
-  })
+      orderItems: true,
+    },
+  });
 
-  await Promise.all(order.orderItems.map(item => {
-    if (item.stockItemId) {
-      // update this stock item was sold
-      return prisma.stockItems.update({
-        where: { id: item.stockItemId },
-        data: { deletedAt: new Date() }
-      })
-    }
-    // if followed the flow step by step this error should not have occurred
-    throw new Error('Unprocessable stock item id not found')
-  }))
+  await Promise.all(
+    order.orderItems.map((item) => {
+      if (item.stockItemId) {
+        // update this stock item was sold
+        return prisma.stockItems.update({
+          where: { id: item.stockItemId },
+          data: { deletedAt: new Date() },
+        });
+      }
+      // if followed the flow step by step this error should not have occurred
+      throw new Error("Unprocessable stock item id not found");
+    })
+  );
 
-  return order
+  return order;
 }
 
 /**
  * Cancel Order by remove stock items from order items
- * @return an order include order items 
+ * @return an order include order items
  */
 export async function cancelOrder(data: InputUpdateOrder) {
   const { orderId, ownerId } = data;
@@ -182,11 +186,47 @@ export async function cancelOrder(data: InputUpdateOrder) {
     })
   );
 
-  return order
+  return order;
 }
 
 /**
- * Delete Order Items
+ * Add Order Items, and update order total amount
+ * @return an order include order items
+ */
+export async function addOrderItems(
+  data: AddOrderItemsBody & InputUpdateOrder
+) {
+  const { orderId, ownerId, productIds } = data;
+  // verify order id
+  const order = await verifyOrder({ orderId, ownerId });
+  // check product ids
+  const products = await prisma.products.findMany({
+    where: { id: { in: productIds } },
+  });
+  // add multiple order items
+  await prisma.orderItems.createMany({
+    data: products.map(({ id }) => ({
+      productId: id,
+      orderId,
+    })),
+  });
+  // update order total amount
+  const amount = products.reduce((p, n) => (p += n.price), order.amount);
+  return prisma.orders.update({
+    where: { id: order.id },
+    data: { amount },
+    include: {
+      orderItems: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Delete Order Items, and update order total amount
  * @returns an order include order items
  */
 export async function deleteOrderItems(
@@ -194,24 +234,7 @@ export async function deleteOrderItems(
 ) {
   const { orderId, ownerId, orderItemIds } = data;
   // verify order id
-  let order = await prisma.orders.findFirst({
-    where: {
-      deletedAt: null,
-      status: OrderStatus.INTERESTED,
-      id: orderId,
-      ownerId,
-    },
-    include: {
-      orderItems: {
-        include: { product: true },
-      },
-    },
-  });
-
-  if (!order) {
-    throw new Error("Order ID does not exist!");
-  }
-
+  let order = await verifyOrder({ orderId, ownerId });
   // delete multiple order items
   await prisma.orderItems.deleteMany({
     where: {
@@ -220,9 +243,25 @@ export async function deleteOrderItems(
     },
   });
 
-  order.orderItems = order.orderItems.filter(
-    ({ id }) => !orderItemIds.includes(id)
-  );
+  let amount = order.amount;
+  order.orderItems = order.orderItems.filter((item) => {
+    if (orderItemIds.includes(item.id)) {
+      amount -= item.product.price;
+      return false; // not return removed item
+    }
+    return true; // return not removed item
+  });
 
-  return { ...order };
+  // update order total amount
+  return prisma.orders.update({
+    where: { id: order.id },
+    data: { amount },
+    include: {
+      orderItems: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
 }

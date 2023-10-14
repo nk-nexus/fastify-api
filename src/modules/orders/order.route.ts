@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import {
+  addOrderItemsHandler,
   cancelOrderHandler,
   completeOrderHandler,
   confirmOrderHandler,
@@ -44,15 +45,26 @@ const updateOrderOpts = (server: FastifyInstance) => ({
       200: $ref("replyUpdateOrderSchema"),
     },
   },
-})
+});
+
+const addOrderItemsOpts = (server: FastifyInstance) => ({
+  preHandler: [server.authenticate],
+  schema: {
+    params: $ref("orderIdSchema"),
+    body: $ref("requestAddOrderItemsSchema"),
+    response: {
+      201: $ref("replyUpsertOrderItemsSchema"),
+    },
+  },
+});
 
 const deleteOrderItemsOpts = (server: FastifyInstance) => ({
-  preHandler: [server.authenticate, server.authorize],
+  preHandler: [server.authenticate],
   schema: {
     params: $ref("orderIdSchema"),
     body: $ref("requestDeleteOrderItemsSchema"),
     response: {
-      200: $ref("replyDeleteOrderItemsSchema"),
+      200: $ref("replyUpsertOrderItemsSchema"),
     },
   },
 });
@@ -72,10 +84,24 @@ async function orderRoutes(server: FastifyInstance) {
     createInterestedOrderOpts(server),
     createInterestedOrderHandler
   );
+  // Add Order Items
+  server.post(
+    "/:orderId/items",
+    addOrderItemsOpts(server),
+    addOrderItemsHandler
+  );
   // Confirm Order (can cancel only order status = ORDERED)
-  server.patch("/:orderId/confirm", updateOrderOpts(server), confirmOrderHandler);
+  server.patch(
+    "/:orderId/confirm",
+    updateOrderOpts(server),
+    confirmOrderHandler
+  );
   // Complete Order
-  server.patch("/:orderId/complete", updateOrderOpts(server), completeOrderHandler);
+  server.patch(
+    "/:orderId/complete",
+    updateOrderOpts(server),
+    completeOrderHandler
+  );
   // Cancel Order (can cancel only order status in [ORDERED,PURCHASE])
   server.patch("/:orderId/cancel", updateOrderOpts(server), cancelOrderHandler);
   // Delete Order Items (can delete only order status = "INTERESTED")

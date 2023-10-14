@@ -1,11 +1,13 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import {
+  AddOrderItemsBody,
   CreateInterestOrderBody,
   DeleteOrderItemsBody,
   GetOrderQuery,
   OrderIdParams,
 } from "./order.schema";
 import {
+  addOrderItems,
   cancelOrder,
   completeOrder,
   confirmOrder,
@@ -85,6 +87,26 @@ export async function cancelOrderHandler(
     ownerId: user.id,
   });
   return reply.code(200).send(order);
+}
+
+export async function addOrderItemsHandler(
+  request: FastifyRequest<{
+    Params: OrderIdParams;
+    Body: AddOrderItemsBody;
+  }>,
+  reply: FastifyReply
+) {
+  const {
+    params: { orderId },
+    body,
+    user,
+  } = request;
+  const orders = await addOrderItems({
+    orderId: parseInt(orderId),
+    ownerId: user.id,
+    ...body,
+  });
+  return reply.code(201).send(orders);
 }
 
 export async function deleteOrderItemsHandler(

@@ -18,14 +18,14 @@ const orderGenerateSchema = {
 };
 
 const orderOwnerSchema = {
-  userId: z.number(),
-  user: replyRegisterUserSchema,
+  ownerId: z.number(),
+  owner: replyRegisterUserSchema,
 };
 
 const orderCoreSchema = {
   details: z.string(),
   status: z.nativeEnum(OrderStatus),
-  total: z.number().min(0),
+  amount: z.number().min(0),
 }
 
 /**
@@ -45,9 +45,14 @@ const requestCreateInterestedOrderSchema = z.object({
     productIds: z.array(z.number()).nonempty()
 })
 
+// Add Order Items Request Schema
+const requestAddOrderItemsSchema = z.object({
+  productIds: z.array(z.number()).nonempty()
+})
+
 // Delete Order Items Request Schema
 const requestDeleteOrderItemsSchema = z.object({
-  orderItemIds: z.array(z.number())
+  orderItemIds: z.array(z.number()).nonempty()
 })
 
 // Update Order Status Request Schema
@@ -81,11 +86,8 @@ const orderIdSchema = z.object({
 // Get Order Status Reply Schema
 const replyGetOrderSchema = z.array(
   z.object({
-    details: z.string(),
-    status: z.nativeEnum(OrderStatus),
-    total: z.number().min(0),
     ...orderGenerateSchema,
-    ...orderOwnerSchema,
+    ...orderCoreSchema,
   })
 );
 
@@ -102,11 +104,11 @@ const replyUpdateOrderSchema = z.object({
   ...orderGenerateSchema,
 })
 
-// Delete Order Items Reply Schema
-const replyDeleteOrderItemsSchema = z.object({
+// Add or Remove Order Items Reply Schema
+const replyUpsertOrderItemsSchema = z.object({
   ...orderCoreSchema,
   ...orderGenerateSchema,
-  orderItem: z.array(z.object({
+  orderItems: z.array(z.object({
     ...orderGenerateSchema,
     product: z.object({
       ...customProductGenerate,
@@ -129,6 +131,8 @@ export type GetOrderQuery = z.infer<typeof requestGetOrderSchema>;
 export type UpdateOrderQuery = z.infer<typeof requestUpdateOrderSchema>;
 // Create Interest Order Body
 export type CreateInterestOrderBody = z.infer<typeof requestCreateInterestedOrderSchema>;
+// Add Order Items Body
+export type AddOrderItemsBody = z.infer<typeof requestAddOrderItemsSchema>;
 // Delete Order Items Body
 export type DeleteOrderItemsBody = z.infer<typeof requestDeleteOrderItemsSchema>;
 // Input Update Order
@@ -141,8 +145,9 @@ export const { schemas: orderSchemas, $ref } = buildJsonSchemas(
     replyGetOrderSchema,
     requestCreateInterestedOrderSchema,
     replyCreateInterestedOrderSchema,
+    requestAddOrderItemsSchema,
     requestDeleteOrderItemsSchema,
-    replyDeleteOrderItemsSchema,
+    replyUpsertOrderItemsSchema,
     requestUpdateOrderSchema,
     replyUpdateOrderSchema,
   },
