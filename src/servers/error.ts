@@ -16,24 +16,16 @@ export default function errorRegistrations<T extends IErrorRegistration>(
   // Register the onError hook
   server.addHook("onError", (request, reply, error, done) => {
     if (error.message.includes("Unauthorized")) {
-      reply.code(401).send({
-        error: "Unauthorized",
-        message: error.message,
-      });
+      reply.code(401);
     } else if (
       error.message.includes("does not exist") ||
       error.message.includes("not found")
     ) {
-      reply.code(404).send({
-        error: "Not Found",
-        message: error.message,
-      });
+      reply.code(404);
+    } else if (error.message.includes("does not have enough")) {
+      reply.code(422);
     } else {
-      // Send a custom error response to the client
-      reply.code(500).send({
-        error: "Internal Server Error",
-        message: error.message,
-      });
+      reply.code(500);
     }
     // Finish the request-response cycle
     done();

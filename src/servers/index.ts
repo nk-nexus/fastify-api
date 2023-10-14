@@ -44,10 +44,10 @@ function buildServer() {
 
   // Register Authentication & Authorization
   authRegistrations(server);
-  // Register Error Handler
-  errorRegistrations(server);
   // Register Routes & Schemas
   routeRegistrations(server);
+  // Register Error Handler
+  errorRegistrations(server);
 
   return server;
 }

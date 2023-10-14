@@ -28,6 +28,14 @@ const orderCoreSchema = {
   amount: z.number().min(0),
 }
 
+const orderItemCore = {
+  ...orderGenerateSchema,
+  product: z.object({
+    ...customProductGenerate,
+    ...customProductInput,
+  }),
+}
+
 /**
  * ==============================================
  *  ORDER REQUEST SCHEMA
@@ -53,15 +61,6 @@ const requestAddOrderItemsSchema = z.object({
 // Delete Order Items Request Schema
 const requestDeleteOrderItemsSchema = z.object({
   orderItemIds: z.array(z.number()).nonempty()
-})
-
-// Update Order Status Request Schema
-const requestUpdateOrderSchema = z.object({
-  status: z.enum([
-    OrderStatus.COMPLETED,
-    OrderStatus.PURCHASED,
-    OrderStatus.ORDERED,
-  ])
 })
 
 // Input Update Order 
@@ -102,19 +101,17 @@ const replyCreateInterestedOrderSchema = z.object({
 const replyUpdateOrderSchema = z.object({
   ...orderCoreSchema,
   ...orderGenerateSchema,
+  orderItems: z.array(z.object({
+    ...orderItemCore,
+    stockItemId: z.number().optional(),
+  }))
 })
 
 // Add or Remove Order Items Reply Schema
 const replyUpsertOrderItemsSchema = z.object({
   ...orderCoreSchema,
   ...orderGenerateSchema,
-  orderItems: z.array(z.object({
-    ...orderGenerateSchema,
-    product: z.object({
-      ...customProductGenerate,
-      ...customProductInput,
-    }),
-  }))
+  orderItems: z.array(z.object(orderItemCore))
 })
 
 /**
@@ -127,8 +124,6 @@ const replyUpsertOrderItemsSchema = z.object({
 export type OrderIdParams = z.infer<typeof orderIdSchema>;
 // Get Order Query
 export type GetOrderQuery = z.infer<typeof requestGetOrderSchema>;
-// Update Order Query
-export type UpdateOrderQuery = z.infer<typeof requestUpdateOrderSchema>;
 // Create Interest Order Body
 export type CreateInterestOrderBody = z.infer<typeof requestCreateInterestedOrderSchema>;
 // Add Order Items Body
@@ -148,7 +143,6 @@ export const { schemas: orderSchemas, $ref } = buildJsonSchemas(
     requestAddOrderItemsSchema,
     requestDeleteOrderItemsSchema,
     replyUpsertOrderItemsSchema,
-    requestUpdateOrderSchema,
     replyUpdateOrderSchema,
   },
   { $id: "order" }

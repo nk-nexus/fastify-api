@@ -104,12 +104,37 @@ export async function confirmOrder(data: InputUpdateOrder) {
       },
     });
 
+    // check stocks are matched enough for the order
+    const orderDemand: Map<number, number> = new Map();
+    order.orderItems = order.orderItems.map((item) => {
+      let demand = orderDemand.get(item.productId);
+      demand = demand ? demand + 1 : 1;
+      // mapping [productId, demand]
+      orderDemand.set(item.productId, demand);
+      // find total in-stock items
+      const inStockIds = item.product.stockItems.reduce<number[]>(
+        (p, n) => (n.deletedAt ? p : [...p, n.id]),
+        [] // default stock item id array
+      );
+      // when current demand > in-stock items
+      // throw error "Unprocessable Entity"
+      if (demand > inStockIds.length) {
+        throw new Error(
+          `Product ${item.productId} does not have enough for order demand`
+        );
+      }
+      // set stock item id for the order item
+      Reflect.set(item, "stockItemId", inStockIds[demand - 1]);
+      // remove unused stock items from product
+      Reflect.set(item.product, "stockItems", null);
+      return { ...item };
+    });
+
+    // multiple update stock item id for each order item
     await Promise.all(
-      order.orderItems.map((item, index) => {
-        const stockItemId = item.product.stockItems[0]?.id;
-        order.orderItems[index].stockItemId = stockItemId;
+      order.orderItems.map(({ id, stockItemId }) => {
         return tx.orderItems.update({
-          where: { id: item.id },
+          where: { id },
           data: { stockItemId },
         });
       })
@@ -136,7 +161,11 @@ export async function completeOrder(data: InputUpdateOrder) {
     },
     data: { status: OrderStatus.COMPLETED },
     include: {
-      orderItems: true,
+      orderItems: {
+        include: {
+          product: true
+        }
+      },
     },
   });
 
@@ -150,7 +179,7 @@ export async function completeOrder(data: InputUpdateOrder) {
         });
       }
       // if followed the flow step by step this error should not have occurred
-      throw new Error("Unprocessable stock item id not found");
+      throw new Error("Stock Item ID not found");
     })
   );
 
@@ -173,7 +202,11 @@ export async function cancelOrder(data: InputUpdateOrder) {
     },
     data: { deletedAt: new Date() },
     include: {
-      orderItems: true,
+      orderItems: {
+        include: {
+          product: true
+        }
+      },
     },
   });
   // remove stock item id from order item

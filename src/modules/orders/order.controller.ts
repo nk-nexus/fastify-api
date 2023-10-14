@@ -42,21 +42,6 @@ export async function createInterestedOrderHandler(
   return reply.code(200).send(order);
 }
 
-export async function completeOrderHandler(
-  request: FastifyRequest<{
-    Params: OrderIdParams;
-  }>,
-  reply: FastifyReply
-) {
-  const { orderId } = request.params;
-  const { user } = request;
-  const order = await completeOrder({
-    orderId: parseInt(orderId),
-    ownerId: user.id,
-  });
-  return reply.code(200).send(order);
-}
-
 export async function confirmOrderHandler(
   request: FastifyRequest<{
     Params: OrderIdParams;
@@ -66,6 +51,21 @@ export async function confirmOrderHandler(
   const { orderId } = request.params;
   const { user } = request;
   const order = await confirmOrder({
+    orderId: parseInt(orderId),
+    ownerId: user.id,
+  });
+  return reply.code(200).send(order);
+}
+
+export async function completeOrderHandler(
+  request: FastifyRequest<{
+    Params: OrderIdParams;
+  }>,
+  reply: FastifyReply
+) {
+  const { orderId } = request.params;
+  const { user } = request;
+  const order = await completeOrder({
     orderId: parseInt(orderId),
     ownerId: user.id,
   });

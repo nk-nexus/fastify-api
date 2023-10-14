@@ -40,7 +40,6 @@ const updateOrderOpts = (server: FastifyInstance) => ({
   preHandler: [server.authenticate],
   schema: {
     params: $ref("orderIdSchema"),
-    querystring: $ref("requestUpdateOrderSchema"),
     response: {
       200: $ref("replyUpdateOrderSchema"),
     },
