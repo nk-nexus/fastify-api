@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextIndex"]
+  previewFeatures = ["fullTextIndex", "fullTextSearch"]
 }
 
 datasource db {
@@ -11,72 +11,93 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Customer {
-  id        Int         @id @default(autoincrement())
-  name      String?     @db.VarChar(50)
-  email     String      @unique @db.VarChar(255)
-  password  String      @unique @db.VarChar(512)
-  salt      String      @db.VarChar(119)
-  phone     String?     @db.VarChar(20)
-  address   String?     @db.Text()
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  Order     Order[]
-  OrderItem OrderItem[]
+model Users {
+  id        Int       @id @default(autoincrement())
+  name      String?   @db.VarChar(50)
+  email     String    @unique @db.VarChar(255)
+  password  String    @unique @db.VarChar(512)
+  salt      String    @db.VarChar(119)
+  role      UserRole  @default(CUSTOMER)
+  phone     String?   @db.VarChar(20)
+  address   String?   @db.Text()
+  loginAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orders    Orders[]
 }
 
-model Order {
-  id         Int         @id @default(autoincrement())
-  details    String?     @db.Text()
-  status     OrderStatus @default(INTERESTED)
-  total      Int
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  deletedAt  DateTime
-  customer   Customer    @relation(fields: [customerId], references: [id])
-  customerId Int
-  OrderItem  OrderItem[]
+model Orders {
+  id         Int          @id @default(autoincrement())
+  details    String?      @db.Text()
+  status     OrderStatus  @default(INTERESTED)
+  amount     Decimal      @db.Decimal(10, 2)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+  owner      Users        @relation(fields: [ownerId], references: [id])
+  ownerId    Int
+  orderItems OrderItems[]
+  Payments   Payments[]
 }
 
-model OrderItem {
-  id           Int        @id @default(autoincrement())
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  customer     Customer   @relation(fields: [customerId], references: [id])
-  customerId   Int
-  order        Order      @relation(fields: [orderId], references: [id])
-  orderId      Int
-  product      Product    @relation(fields: [productId], references: [id])
-  productId    Int
-  stockItem    StockItem? @relation(fields: [stockItemsId], references: [id])
-  stockItemsId Int?       @unique
-}
-
-model Product {
+model OrderItems {
   id          Int         @id @default(autoincrement())
-  name        String      @db.VarChar(119)
-  brand       String      @db.VarChar(119)
-  vendor      String      @db.VarChar(119)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  order       Orders      @relation(fields: [orderId], references: [id])
+  orderId     Int
+  product     Products    @relation(fields: [productId], references: [id])
+  productId   Int
+  stockItem   StockItems? @relation(fields: [stockItemId], references: [id])
+  stockItemId Int?        @unique
+}
+
+model Payments {
+  id        Int           @id @default(autoincrement())
+  amount    Decimal       @db.Decimal(10, 2)
+  method    String        @db.VarChar(119)
+  date      DateTime      @default(now())
+  status    PaymentStatus
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  order     Orders        @relation(fields: [orderId], references: [id])
+  orderId   Int
+}
+
+model Products {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(119)
+  brand       String       @db.VarChar(119)
+  vendor      String       @db.VarChar(119)
   type        ProductType
-  price       Int
+  price       Decimal      @db.Decimal(10, 2)
+  tags        String       @db.Text()
   details     Json
   purchasable Boolean
-  OrderItem   OrderItem[]
-  StockItem   StockItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  stockItems  StockItems[]
+  orderItems  OrderItems[]
 
-  @@fulltext([brand, vendor])
+  @@fulltext([tags])
 }
 
-model StockItem {
-  id        Int        @id @default(autoincrement())
-  code      String     @db.VarChar(50)
-  details   String?    @db.Text()
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deletedAt DateTime
-  product   Product    @relation(fields: [productId], references: [id])
+model StockItems {
+  id        Int         @id @default(autoincrement())
+  code      String      @unique @db.VarChar(50)
+  details   String?     @db.Text()
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime?
+  product   Products    @relation(fields: [productId], references: [id])
   productId Int
-  OrderItem OrderItem?
+  orderItem OrderItems?
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
 }
 
 enum ProductType {
@@ -88,9 +109,9 @@ enum ProductType {
   HDD
   MOTHERBOARD
   POWER_SUPPLY
-  UPS
   MONITOR
   CASE
+  UPS
 }
 
 enum OrderStatus {
@@ -98,4 +119,10 @@ enum OrderStatus {
   ORDERED
   PURCHASED
   COMPLETED
+}
+
+enum UserRole {
+  CUSTOMER
+  STAFF
+  ADMIN
 }
