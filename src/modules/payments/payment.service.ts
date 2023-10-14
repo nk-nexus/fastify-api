@@ -31,7 +31,7 @@ export async function createPayment(data: CreatePaymentBody) {
     },
     data: {
       status:
-        currentAmount.toNumber() < order.amount
+        currentAmount.toNumber() < order.amount.toNumber()
           ? OrderStatus.ORDERED
           : OrderStatus.PURCHASED,
     },
@@ -43,7 +43,7 @@ export async function createPayment(data: CreatePaymentBody) {
       amount,
       orderId,
       status:
-        currentAmount.toNumber() < order.amount
+        currentAmount.toNumber() < order.amount.toNumber()
           ? PaymentStatus.PENDING
           : PaymentStatus.SUCCESSFUL,
     },

@@ -102,7 +102,7 @@ async function orderRoutes(server: FastifyInstance) {
     completeOrderHandler
   );
   // Cancel Order (can cancel only order status in [ORDERED,PURCHASE])
-  server.patch("/:orderId/cancel", updateOrderOpts(server), cancelOrderHandler);
+  server.delete("/:orderId/cancel", updateOrderOpts(server), cancelOrderHandler);
   // Delete Order Items (can delete only order status = "INTERESTED")
   server.delete(
     "/:orderId/items",

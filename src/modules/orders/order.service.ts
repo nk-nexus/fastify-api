@@ -8,6 +8,7 @@ import {
   InputUpdateOrder,
 } from "./order.schema";
 import { verifyOrder } from "./order.util";
+import { Decimal } from "@prisma/client/runtime/library";
 
 /**
  * Get Order Input
@@ -49,11 +50,11 @@ export async function createInterestedOrder(
 ) {
   const { productIds, details, ownerId } = data;
   // verify product id
-  let amount = 0;
+  let amount = new Decimal(0);
   const products = await Promise.all(
     productIds.map(async (id) => {
       const product = await prisma.products.findFirst({ where: { id } });
-      amount += product?.price || 0;
+      amount = Decimal.add(amount, product?.price || 0);
       return product;
     })
   );
@@ -130,15 +131,27 @@ export async function confirmOrder(data: InputUpdateOrder) {
       return { ...item };
     });
 
-    // multiple update stock item id for each order item
-    await Promise.all(
-      order.orderItems.map(({ id, stockItemId }) => {
+    await Promise.all([
+      // multiple add stock items to order items
+      ...order.orderItems.map(({ id, stockItemId }) => {
         return tx.orderItems.update({
           where: { id },
           data: { stockItemId },
         });
+      }),
+      // multiple soft delete stock items
+      ...order.orderItems.map((item) => {
+        if (item.stockItemId) {
+          // update this stock item was sold
+          return tx.stockItems.update({
+            where: { id: item.stockItemId },
+            data: { deletedAt: new Date() },
+          });
+        }
+        // if followed the flow step by step this error should not have occurred
+        throw new Error("Stock Item ID not found");
       })
-    );
+    ]);
 
     return order;
   });
@@ -152,7 +165,7 @@ export async function confirmOrder(data: InputUpdateOrder) {
 export async function completeOrder(data: InputUpdateOrder) {
   const { orderId, ownerId } = data;
   // complete order
-  const order = await prisma.orders.update({
+  return prisma.orders.update({
     where: {
       ownerId,
       id: orderId,
@@ -163,27 +176,11 @@ export async function completeOrder(data: InputUpdateOrder) {
     include: {
       orderItems: {
         include: {
-          product: true
-        }
+          product: true,
+        },
       },
     },
   });
-
-  await Promise.all(
-    order.orderItems.map((item) => {
-      if (item.stockItemId) {
-        // update this stock item was sold
-        return prisma.stockItems.update({
-          where: { id: item.stockItemId },
-          data: { deletedAt: new Date() },
-        });
-      }
-      // if followed the flow step by step this error should not have occurred
-      throw new Error("Stock Item ID not found");
-    })
-  );
-
-  return order;
 }
 
 /**
@@ -204,20 +201,33 @@ export async function cancelOrder(data: InputUpdateOrder) {
     include: {
       orderItems: {
         include: {
-          product: true
-        }
+          product: true,
+        },
       },
     },
   });
-  // remove stock item id from order item
-  await Promise.all(
-    order.orderItems.map((item) => {
-      prisma.orderItems.update({
+  
+  await Promise.all([
+    // remove stock item id from order item
+    ...order.orderItems.map((item) => {
+      return prisma.orderItems.update({
         where: { id: item.id },
         data: { stockItemId: null },
       });
+    }),
+    // multiple soft delete stock items
+    ...order.orderItems.map((item) => {
+      if (item.stockItemId) {
+        // update this stock item was sold
+        return prisma.stockItems.update({
+          where: { id: item.stockItemId },
+          data: { deletedAt: null },
+        });
+      }
+      // if followed the flow step by step this error should not have occurred
+      throw new Error("Stock Item ID not found");
     })
-  );
+  ]);
 
   return order;
 }
@@ -233,18 +243,23 @@ export async function addOrderItems(
   // verify order id
   const order = await verifyOrder({ orderId, ownerId });
   // check product ids
-  const products = await prisma.products.findMany({
+  let products = await prisma.products.findMany({
     where: { id: { in: productIds } },
   });
   // add multiple order items
   await prisma.orderItems.createMany({
-    data: products.map(({ id }) => ({
-      productId: id,
-      orderId,
-    })),
+    data: productIds
+      .filter((id) => !!products.find((p) => p.id === id))
+      .map((id) => ({
+        productId: id,
+        orderId,
+      })),
   });
   // update order total amount
-  const amount = products.reduce((p, n) => (p += n.price), order.amount);
+  const amount = productIds.reduce((p, n) => {
+    const product = products.find((p) => p.id === n);
+    return Decimal.add(p, product?.price || 0);
+  }, order.amount);
   return prisma.orders.update({
     where: { id: order.id },
     data: { amount },
@@ -279,7 +294,7 @@ export async function deleteOrderItems(
   let amount = order.amount;
   order.orderItems = order.orderItems.filter((item) => {
     if (orderItemIds.includes(item.id)) {
-      amount -= item.product.price;
+      amount = Decimal.sub(amount, item.product.price);
       return false; // not return removed item
     }
     return true; // return not removed item
