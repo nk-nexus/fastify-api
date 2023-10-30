@@ -22,7 +22,7 @@ DATABASE_URL=[YOUR_DATABASE_URL]
 ```
 
 #### Docker Database (Optional)
-If you are using docker and want to connect the app to local database, follow this guide.
+If you are using [docker](https://www.docker.com/products/docker-desktop/) and want to connect the app to local database, follow this guide.
 
 to create docker network run `docker network create -d bridge [NETWORK_NAME]` and `docker volume create [VOLUME_NAME]` to create volume
 
